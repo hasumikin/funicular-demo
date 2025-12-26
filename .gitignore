@@ -48,6 +48,7 @@
 
 # Kamal
 .kamal/secrets
+config/deploy.yml
 
 # Infrastructure
 infrastructure/*.bak

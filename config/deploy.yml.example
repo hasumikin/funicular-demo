@@ -7,22 +7,22 @@ image: rails-chat
 # Deploy to these servers.
 servers:
   web:
-    - 54.168.191.153
+    - YOUR_SERVER_IP
   # job:
   #   hosts:
-  #     - 54.168.191.153
+  #     - YOUR_SERVER_IP
   #   cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt
 # This requires turning on config.assume_ssl and config.force_ssl in production.rb!
 proxy:
   ssl: true
-  host: rails-chat.hasumikin.com
+  host: your-domain.com
 
 # Amazon ECR registry
 # Will be updated by bin/deploy_setup script
 registry:
-  server: 574134345704.dkr.ecr.ap-northeast-1.amazonaws.com
+  server: YOUR_AWS_ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com
   username: AWS
   password:
     - KAMAL_REGISTRY_PASSWORD
@@ -65,7 +65,7 @@ volumes:
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
 # version inside the asset_path.
-asset_path: /rails/public/assets
+# asset_path: /rails/public/assets
 
 
 # Configure the image builder.
@@ -86,7 +86,7 @@ builder:
 ssh:
   user: ubuntu
   keys:
-    - ~/.ssh/rails-chat.pem
+    - ~/.ssh/YOUR_KEY.pem
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:

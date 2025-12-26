@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM ruby:3.3-slim AS builder
+FROM ruby:4.0-slim AS builder
 
 # Install build dependencies
 RUN apt-get update -qq && \
@@ -15,23 +15,35 @@ RUN apt-get update -qq && \
     npm install -g yarn && \
     rm -rf /var/lib/apt/lists/*
 
+# Build picorbc compiler
+WORKDIR /tmp/picoruby
+RUN git clone --depth=1 --single-branch --branch master https://github.com/picoruby/picoruby . && \
+    git submodule update --init --recursive mrbgems/mruby-compiler2 && \
+    git submodule update --init mrbgems/mruby-bin-mrbc2 && \
+    MRUBY_CONFIG=picorbc rake && \
+    cp bin/picorbc /usr/local/bin/ && \
+    chmod +x /usr/local/bin/picorbc
+
 WORKDIR /rails
 
 # Install gems
 COPY Gemfile Gemfile.lock ./
 RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
+    bundle config set --local without 'test' && \
     bundle install
 
 # Copy application code
 COPY . .
+
+# Compile PicoRuby code with funicular
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails funicular:compile
 
 # Precompile assets
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
 RUN bundle exec rails tailwindcss:build
 
 # Stage 2: Runtime environment
-FROM ruby:3.3-slim
+FROM ruby:4.0-slim
 
 # Install runtime dependencies only
 RUN apt-get update -qq && \

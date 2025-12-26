@@ -14,9 +14,10 @@ gem "bootsnap", require: false
 # Tailwind CSS
 gem "tailwindcss-rails"
 
+# Funicular - From GitHub
+gem "funicular", git: "https://github.com/hasumikin/funicular"
+
 group :development do
   gem "debug", platforms: %i[ mri windows ]
   gem "web-console"
-  # Funicular - From GitHub
-  gem "funicular", git: "https://github.com/hasumikin/funicular"
 end
