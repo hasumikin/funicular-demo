@@ -67,7 +67,7 @@ class LoginComponent < Funicular::Component
         end
 
         div(class: s.hint) do
-          span { "Demo users: alice, bob, charlie (password: password)" }
+          span { "Demo use only" }
         end
       end
     end
