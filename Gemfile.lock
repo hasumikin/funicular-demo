@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/hasumikin/funicular
-  revision: 1ed0dcfda2e3a87e62b6b52c404481ce2f1475ec
+  revision: 4ac4120b7522311c841655b97d0122b5f631c9c7
   specs:
     funicular (0.1.0)
       rails (~> 8.0)
