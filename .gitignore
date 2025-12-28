@@ -56,3 +56,6 @@ infrastructure/*.bak
 # Docker
 .dockerignore.bak
 config/*.bak
+
+# Copy PicoRuby.wasm from local picoruby
+copy_picoruby.sh
