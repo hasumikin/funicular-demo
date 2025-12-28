@@ -110,11 +110,10 @@ class ChatComponent < Funicular::Component
   def handle_send_message(event)
     event.preventDefault
 
-    if state.message_input.empty?
+    content = state.message_input.to_s.strip
+    if content.empty?
       return
     end
-
-    content = state.message_input
 
     # Clear the form
     form = event[:target]

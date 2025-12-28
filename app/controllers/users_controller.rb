@@ -35,7 +35,17 @@ class UsersController < ApplicationController
     end
 
     if params[:avatar]
-      # params[:avatar] is now an ActionDispatch::Http::UploadedFile object
+      # Validate file type (only allow actual image formats)
+      allowed_types = %w[image/jpeg image/png image/gif image/webp]
+      unless allowed_types.include?(params[:avatar].content_type)
+        return render json: { error: "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed." }, status: :unprocessable_entity
+      end
+
+      # Limit file size to 5MB
+      if params[:avatar].size > 5.megabytes
+        return render json: { error: "File too large. Maximum size is 5MB." }, status: :unprocessable_entity
+      end
+
       current_user.avatar = params[:avatar].read
     end
 

@@ -70,7 +70,7 @@ class MessageListComponent < Funicular::Component
               placeholder: "Type a message...",
               class: s.message_input
             )
-            is_disabled = props[:message_input].to_s.empty?
+            is_disabled = props[:message_input].to_s.strip.empty?
             button(
               type: "submit",
               class: s.send_button(is_disabled ? :disabled : :enabled),

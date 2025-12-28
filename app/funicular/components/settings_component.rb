@@ -5,7 +5,11 @@ class SettingsComponent < Funicular::Component
     header "flex items-center justify-between mb-6"
     title "text-2xl font-bold text-gray-800"
     back_button "text-blue-600 hover:text-blue-800"
-    message "mb-4 p-4 border rounded bg-green-100 border-green-400 text-green-700"
+    message base: "mb-4 p-4 border rounded",
+            variants: {
+              success: "bg-green-100 border-green-400 text-green-700",
+              error: "bg-red-100 border-red-400 text-red-700"
+            }
     form "space-y-6"
     label "block text-sm font-medium text-gray-700 mb-2"
     input "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -26,6 +30,7 @@ class SettingsComponent < Funicular::Component
       user_object: nil,
       errors: {},
       message: nil,
+      is_error: false,
       avatar_preview: nil,
       saving: false,
       avatar_cache_buster: Time.now.to_i
@@ -62,7 +67,7 @@ class SettingsComponent < Funicular::Component
   end
 
   def handle_save(data)
-    patch(saving: true, message: nil, errors: {})
+    patch(saving: true, message: nil, is_error: false, errors: {})
 
     if @selected_avatar_file
       # If avatar file exists, use FormData to upload both display_name and avatar
@@ -89,6 +94,7 @@ class SettingsComponent < Funicular::Component
         patch(
           saving: false,
           message: "Settings saved successfully!",
+          is_error: false,
           user_object: updated_user_object,
           user: {
             username: updated_user_object.username,
@@ -96,7 +102,7 @@ class SettingsComponent < Funicular::Component
           }
         )
       else
-        patch(saving: false, message: "Error: #{result}")
+        patch(saving: false, message: "Error: #{result}", is_error: true)
       end
     end
   end
@@ -118,9 +124,10 @@ class SettingsComponent < Funicular::Component
 
   def handle_formdata_response(result)
     if result.nil?
-      patch(saving: false, message: "Failed to parse response")
+      patch(saving: false, message: "Failed to parse response", is_error: true)
     elsif result["error"] || result["errors"]
-      patch(saving: false, message: "Failed to save settings")
+      error_msg = result["error"] || result["errors"].join(", ")
+      patch(saving: false, message: error_msg, is_error: true, avatar_preview: nil)
     else
       # Update user instance with new data
       updated_user_object = state.user_object
@@ -132,6 +139,7 @@ class SettingsComponent < Funicular::Component
       patch(
         saving: false,
         message: "Settings saved successfully!",
+        is_error: false,
         user_object: updated_user_object,
         user: {
           username: updated_user_object.username,
@@ -157,7 +165,7 @@ class SettingsComponent < Funicular::Component
         end
 
         if state.message
-          div(class: s.message) do
+          div(class: s.message(state.is_error ? :error : :success)) do
             span { state.message }
           end
         end

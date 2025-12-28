@@ -30,10 +30,16 @@ class ChatChannel < ApplicationCable::Channel
   end
 
   def send_message(data)
+    content = data["content"].to_s.strip
+    if content.empty?
+      transmit({ type: "error", message: "Message cannot be empty" })
+      return
+    end
+
     channel = Channel.find(params[:channel_id])
     message = channel.messages.create!(
       user: current_user,
-      content: data["content"]
+      content: content
     )
 
     ActionCable.server.broadcast "chat_#{channel.id}", {
