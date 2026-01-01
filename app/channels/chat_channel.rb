@@ -1,4 +1,7 @@
 class ChatChannel < ApplicationCable::Channel
+  # TTL for idempotency keys (5 minutes)
+  IDEMPOTENCY_TTL = 5.minutes
+
   def subscribed
     channel = Channel.find(params[:channel_id])
     stream_from "chat_#{channel.id}"
@@ -30,6 +33,13 @@ class ChatChannel < ApplicationCable::Channel
   end
 
   def send_message(data)
+    # Check for duplicate message using idempotency key
+    idempotency_key = data["_idempotency_key"]
+    if idempotency_key.present? && duplicate_message?(idempotency_key)
+      Rails.logger.info "[ChatChannel] Ignoring duplicate message: #{idempotency_key}"
+      return
+    end
+
     content = data["content"].to_s.strip
     if content.empty?
       transmit({ type: "error", message: "Message cannot be empty" })
@@ -41,6 +51,9 @@ class ChatChannel < ApplicationCable::Channel
       user: current_user,
       content: content
     )
+
+    # Mark message as processed
+    mark_message_processed(idempotency_key) if idempotency_key.present?
 
     ActionCable.server.broadcast "chat_#{channel.id}", {
       type: "new_message",
@@ -60,4 +73,21 @@ class ChatChannel < ApplicationCable::Channel
     transmit({ type: "error", message: e.message })
   end
 
+  private
+
+  def idempotency_cache_key(key)
+    "chat_channel:idempotency:#{key}"
+  end
+
+  def duplicate_message?(idempotency_key)
+    Rails.cache.exist?(idempotency_cache_key(idempotency_key))
+  end
+
+  def mark_message_processed(idempotency_key)
+    Rails.cache.write(
+      idempotency_cache_key(idempotency_key),
+      true,
+      expires_in: IDEMPOTENCY_TTL
+    )
+  end
 end
