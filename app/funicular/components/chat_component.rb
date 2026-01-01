@@ -17,7 +17,6 @@ class ChatComponent < Funicular::Component
       message_input: "",
       current_user: nil,
       loading: true,
-      stats: [],
       skip_scroll: false,
       avatar_cache_buster: Time.now.to_i
     }
@@ -37,7 +36,6 @@ class ChatComponent < Funicular::Component
 
   def component_will_unmount
     @subscription.unsubscribe if @subscription
-    @stats_subscription.unsubscribe if @stats_subscription
   end
 
   def load_channels
@@ -61,7 +59,7 @@ class ChatComponent < Funicular::Component
   end
 
   def select_channel(channel)
-    patch(current_channel: channel, messages: [], loading: true, stats: [])
+    patch(current_channel: channel, messages: [], loading: true)
 
     # Update URL to reflect the current channel
     new_path = "/chat/#{channel.id}"
@@ -72,9 +70,6 @@ class ChatComponent < Funicular::Component
     # Subscribe to ActionCable channel
     if @subscription
       @subscription.unsubscribe
-    end
-    if @stats_subscription
-      @stats_subscription.unsubscribe
     end
 
     consumer = Funicular::Cable.create_consumer("/cable")
@@ -89,16 +84,6 @@ class ChatComponent < Funicular::Component
         patch(messages: messages, skip_scroll: false)
       when "delete_message"
         handle_message_delete(data["message_id"])
-      end
-    end
-
-    # Subscribe to StatsChannel
-    @stats_subscription = consumer.subscriptions.create(
-      { channel: "StatsChannel", channel_id: channel.id }
-    ) do |data|
-      case data["type"]
-      when "stats_update"
-        patch(stats: data["stats"])
       end
     end
   end
@@ -171,14 +156,6 @@ class ChatComponent < Funicular::Component
           on_send_message: ->(event) { handle_send_message(event) },
           on_message_delete: ->(message_id) { handle_message_delete(message_id) }
         })
-
-        # Stats chart area
-        if state.current_channel
-          component(StatsChartComponent, {
-            preserve: true,
-            stats: state.stats
-          })
-        end
       end
     end
   end
