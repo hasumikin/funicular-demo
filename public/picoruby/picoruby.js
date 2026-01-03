@@ -5362,14 +5362,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  435923: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 435963: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 436003: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 436044: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 436082: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 436120: ($0, $1) => { const str = UTF8ToString($1); globalThis.picorubyRefs[$0] = str; },  
- 436189: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 436328: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  436771: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 436811: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 436851: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 436892: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 436930: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 436968: ($0, $1) => { const str = UTF8ToString($1); globalThis.picorubyRefs[$0] = str; },  
+ 437037: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 437176: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function init_js_refs() { if (typeof globalThis.picorubyRefs === 'undefined') { globalThis.picorubyRefs = []; globalThis.picorubyRefs.push(window); } if (typeof window._js_remove_event_listener_wrapper === 'undefined') { window._js_remove_event_listener_wrapper = function(callback_id) { if (!globalThis.picorubyEventHandlers) return false; const info = globalThis.picorubyEventHandlers[callback_id]; if (!info) return false; info.target.removeEventListener(info.type, info.handler); delete globalThis.picorubyEventHandlers[callback_id]; return true; }; } }
 function is_array_like(ref_id) { const obj = globalThis.picorubyRefs[ref_id]; return obj instanceof NodeList || obj instanceof HTMLCollection || (typeof obj === 'object' && obj !== null && 'length' in obj && typeof obj.length === 'number'); }
