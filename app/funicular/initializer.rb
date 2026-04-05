@@ -11,10 +11,10 @@ Funicular.load_schemas({ User => "user", Session => "session", Channel => "chann
   # Start the application after all schemas are loaded
   Funicular.start(container: 'app') do |router|
     router.get('/login', to: LoginComponent, as: 'login')
-    router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel')
+    router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel', constraints: { channel_id: /\d+/ })
     router.get('/chat', to: ChatComponent, as: 'chat')
     router.get('/settings', to: SettingsComponent, as: 'settings')
-    router.delete('/messages/:message_id', to: MessageComponent, as: 'message')
+    router.delete('/messages/:message_id', to: MessageComponent, as: 'message', constraints: { message_id: /\d+/ })
     router.set_default('/login')
   end
 end

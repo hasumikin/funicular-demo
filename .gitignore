@@ -59,3 +59,5 @@ config/*.bak
 
 # Copy PicoRuby.wasm from local picoruby
 copy_picoruby.sh
+
+.cloudformation-stack-backup.json
