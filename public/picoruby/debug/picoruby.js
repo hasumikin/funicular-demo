@@ -5403,14 +5403,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('loadSplitModule');
 }
 var ASM_CONSTS = {
-  2529437: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2529477: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2529517: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2529558: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2529596: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2529634: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2529707: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2529846: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2536381: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2536421: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2536461: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2536502: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2536540: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2536578: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2536651: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2536790: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }
@@ -5776,11 +5776,7 @@ var wasmImports = {
   /** @export */
   invoke_ddd,
   /** @export */
-  invoke_i,
-  /** @export */
   invoke_ii,
-  /** @export */
-  invoke_iid,
   /** @export */
   invoke_iii,
   /** @export */
@@ -5788,21 +5784,9 @@ var wasmImports = {
   /** @export */
   invoke_iiiii,
   /** @export */
-  invoke_iiiij,
-  /** @export */
-  invoke_iiiijii,
-  /** @export */
-  invoke_iiij,
-  /** @export */
   invoke_iij,
   /** @export */
-  invoke_iiji,
-  /** @export */
   invoke_iijiiiiii,
-  /** @export */
-  invoke_iijj,
-  /** @export */
-  invoke_ij,
   /** @export */
   invoke_ijji,
   /** @export */
@@ -5814,6 +5798,8 @@ var wasmImports = {
   /** @export */
   invoke_vii,
   /** @export */
+  invoke_viid,
+  /** @export */
   invoke_viii,
   /** @export */
   invoke_viiii,
@@ -5822,9 +5808,21 @@ var wasmImports = {
   /** @export */
   invoke_viiiiiii,
   /** @export */
+  invoke_viiiij,
+  /** @export */
+  invoke_viiiiji,
+  /** @export */
+  invoke_viiiijii,
+  /** @export */
+  invoke_viiij,
+  /** @export */
+  invoke_viij,
+  /** @export */
   invoke_viiji,
   /** @export */
   invoke_viijiii,
+  /** @export */
+  invoke_viijj,
   /** @export */
   invoke_vij,
   /** @export */
@@ -5957,21 +5955,10 @@ var wasmImports = {
   ws_set_onopen
 };
 
-function invoke_iii(index,a1,a2) {
+function invoke_viii(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_ii(index,a1) {
-  var sp = stackSave();
-  try {
-    return getWasmTableEntry(index)(a1);
+    getWasmTableEntry(index)(a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -5983,6 +5970,17 @@ function invoke_vii(index,a1,a2) {
   var sp = stackSave();
   try {
     getWasmTableEntry(index)(a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_ii(index,a1) {
+  var sp = stackSave();
+  try {
+    return getWasmTableEntry(index)(a1);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6035,6 +6033,17 @@ function invoke_viijiii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
+function invoke_iii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    return getWasmTableEntry(index)(a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_viiiii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
@@ -6046,10 +6055,10 @@ function invoke_viiiii(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_i(index) {
+function invoke_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)();
+    getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6,a7);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6057,7 +6066,18 @@ function invoke_i(index) {
   }
 }
 
-function invoke_viiiiiii(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_viiii(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiiijii(index,a1,a2,a3,a4,a5,a6,a7) {
   var sp = stackSave();
   try {
     getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6,a7);
@@ -6079,43 +6099,10 @@ function invoke_iiii(index,a1,a2,a3) {
   }
 }
 
-function invoke_iiiijii(index,a1,a2,a3,a4,a5,a6) {
+function invoke_viiiij(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viii(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_viiii(index,a1,a2,a3,a4) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2,a3,a4);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iiiij(index,a1,a2,a3,a4) {
-  var sp = stackSave();
-  try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4);
+    getWasmTableEntry(index)(a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6145,10 +6132,10 @@ function invoke_iiiii(index,a1,a2,a3,a4) {
   }
 }
 
-function invoke_iij(index,a1,a2) {
+function invoke_viij(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2);
+    getWasmTableEntry(index)(a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6156,21 +6143,10 @@ function invoke_iij(index,a1,a2) {
   }
 }
 
-function invoke_iiij(index,a1,a2,a3) {
+function invoke_viiij(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_iiji(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    return getWasmTableEntry(index)(a1,a2,a3);
+    getWasmTableEntry(index)(a1,a2,a3,a4);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6200,7 +6176,29 @@ function invoke_ijji(index,a1,a2,a3) {
   }
 }
 
-function invoke_iid(index,a1,a2) {
+function invoke_viiiiji(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viijj(index,a1,a2,a3,a4) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_ddd(index,a1,a2) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2);
@@ -6211,18 +6209,7 @@ function invoke_iid(index,a1,a2) {
   }
 }
 
-function invoke_iijj(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    return getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_ddd(index,a1,a2) {
+function invoke_iij(index,a1,a2) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2);
@@ -6245,10 +6232,10 @@ function invoke_jii(index,a1,a2) {
   }
 }
 
-function invoke_ij(index,a1) {
+function invoke_viid(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1);
+    getWasmTableEntry(index)(a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
