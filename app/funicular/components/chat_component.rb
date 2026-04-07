@@ -14,7 +14,6 @@ class ChatComponent < Funicular::Component
       channels: [],
       current_channel: nil,
       messages: [],
-      message_input: "",
       current_user: nil,
       loading: true,
       skip_scroll: false,
@@ -88,24 +87,9 @@ class ChatComponent < Funicular::Component
     end
   end
 
-  def handle_message_input(event)
-    patch(message_input: event.target[:value])
-  end
-
-  def handle_send_message(event)
-    event.preventDefault
-
-    content = state.message_input.to_s.strip
-    if content.empty?
-      return
-    end
-
-    # Clear the form
-    form = event[:target]
-    form.reset if form
-
-    # Clear state
-    patch(message_input: "")
+  def handle_send_message(content)
+    return if content.to_s.strip.empty?
+    return unless @subscription
 
     @subscription.perform("send_message", { content: content })
   end
@@ -148,12 +132,10 @@ class ChatComponent < Funicular::Component
           current_channel: state.current_channel,
           messages: state.messages,
           loading: state.loading,
-          message_input: state.message_input,
           current_user: state.current_user,
           skip_scroll: state.skip_scroll,
           avatar_cache_buster: state.avatar_cache_buster,
-          on_message_input: ->(event) { handle_message_input(event) },
-          on_send_message: ->(event) { handle_send_message(event) },
+          on_send_message: ->(content) { handle_send_message(content) },
           on_message_delete: ->(message_id) { handle_message_delete(message_id) }
         })
       end
