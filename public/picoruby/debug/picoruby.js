@@ -5403,14 +5403,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('loadSplitModule');
 }
 var ASM_CONSTS = {
-  2536381: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2536421: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2536461: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2536502: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2536540: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2536578: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2536651: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2536790: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2553341: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2553381: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2553421: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2553462: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2553500: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2553538: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2553611: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2553750: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }
@@ -5525,6 +5525,7 @@ var _mrb_tick_wasm = Module['_mrb_tick_wasm'] = makeInvalidEarlyAccess('_mrb_tic
 var _mrb_run_step = Module['_mrb_run_step'] = makeInvalidEarlyAccess('_mrb_run_step');
 var _picorb_init = Module['_picorb_init'] = makeInvalidEarlyAccess('_picorb_init');
 var _picorb_create_task = Module['_picorb_create_task'] = makeInvalidEarlyAccess('_picorb_create_task');
+var _picorb_create_task_with_filename = Module['_picorb_create_task_with_filename'] = makeInvalidEarlyAccess('_picorb_create_task_with_filename');
 var _picorb_create_task_from_mrb = Module['_picorb_create_task_from_mrb'] = makeInvalidEarlyAccess('_picorb_create_task_from_mrb');
 var _serial_data_received = Module['_serial_data_received'] = makeInvalidEarlyAccess('_serial_data_received');
 var _serial_disconnect_callback = Module['_serial_disconnect_callback'] = makeInvalidEarlyAccess('_serial_disconnect_callback');
@@ -5568,6 +5569,7 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['mrb_run_step'] != 'undefined', 'missing Wasm export: mrb_run_step');
   assert(typeof wasmExports['picorb_init'] != 'undefined', 'missing Wasm export: picorb_init');
   assert(typeof wasmExports['picorb_create_task'] != 'undefined', 'missing Wasm export: picorb_create_task');
+  assert(typeof wasmExports['picorb_create_task_with_filename'] != 'undefined', 'missing Wasm export: picorb_create_task_with_filename');
   assert(typeof wasmExports['picorb_create_task_from_mrb'] != 'undefined', 'missing Wasm export: picorb_create_task_from_mrb');
   assert(typeof wasmExports['serial_data_received'] != 'undefined', 'missing Wasm export: serial_data_received');
   assert(typeof wasmExports['serial_disconnect_callback'] != 'undefined', 'missing Wasm export: serial_disconnect_callback');
@@ -5607,6 +5609,7 @@ function assignWasmExports(wasmExports) {
   _mrb_run_step = Module['_mrb_run_step'] = createExportWrapper('mrb_run_step', 0);
   _picorb_init = Module['_picorb_init'] = createExportWrapper('picorb_init', 0);
   _picorb_create_task = Module['_picorb_create_task'] = createExportWrapper('picorb_create_task', 1);
+  _picorb_create_task_with_filename = Module['_picorb_create_task_with_filename'] = createExportWrapper('picorb_create_task_with_filename', 2);
   _picorb_create_task_from_mrb = Module['_picorb_create_task_from_mrb'] = createExportWrapper('picorb_create_task_from_mrb', 2);
   _serial_data_received = Module['_serial_data_received'] = createExportWrapper('serial_data_received', 3);
   _serial_disconnect_callback = Module['_serial_disconnect_callback'] = createExportWrapper('serial_disconnect_callback', 1);
