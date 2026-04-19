@@ -1,5 +1,5 @@
 PATH
-  remote: ../funicular
+  remote: ../../../../funicular
   specs:
     funicular (0.1.0)
       rails (~> 8.0)
