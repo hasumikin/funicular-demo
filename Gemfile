@@ -16,7 +16,7 @@ gem "tailwindcss-rails"
 
 # Funicular - From GitHub
 #gem "funicular", git: "https://github.com/hasumikin/funicular"
-gem "funicular", path: "~/work/funicular"
+gem "funicular"
 
 group :development do
   gem "debug", platforms: %i[ mri windows ]
