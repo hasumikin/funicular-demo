@@ -54,6 +54,7 @@ class MessageListComponent < Funicular::Component
         # Message input (isolated child so typing does not re-render the messages area)
         component(MessageInputComponent, {
           preserve: true,
+          channel_id: props[:channel_id],
           on_send_message: props[:on_send_message]
         })
       else

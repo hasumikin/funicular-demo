@@ -22,6 +22,9 @@ class ChatComponent < Funicular::Component
   end
 
   def component_mounted
+    # Re-enable drafts (may have been disabled on logout)
+    Funicular::DraftStore.enable!
+
     # Check if logged in using Session model
     Session.current_user do |user, error|
       if error
@@ -95,6 +98,9 @@ class ChatComponent < Funicular::Component
   end
 
   def handle_logout(event)
+    # Clear all drafts on logout (privacy: don't leak to next user)
+    Funicular::DraftStore.clear_all!
+
     # Logout using Session model
     Session.logout do |success, error|
       Funicular.router.navigate("/login")
@@ -130,6 +136,7 @@ class ChatComponent < Funicular::Component
         component(MessageListComponent, {
           preserve: true,
           current_channel: state.current_channel,
+          channel_id: state.current_channel&.id,
           messages: state.messages,
           loading: state.loading,
           current_user: state.current_user,

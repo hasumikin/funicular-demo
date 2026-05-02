@@ -11,11 +11,32 @@ class MessageInputComponent < Funicular::Component
   end
 
   def initialize_state
-    { message_input: "" }
+    { message_input: "", current_channel_id: nil }
+  end
+
+  def component_mounted
+    patch(current_channel_id: props[:channel_id])
+    restore_draft
+  end
+
+  def component_updated
+    new_channel_id = props[:channel_id]
+    old_channel_id = state.current_channel_id
+    return if new_channel_id == old_channel_id
+
+    # Channel changed: save old draft, load new one
+    Funicular::DraftStore.set(old_channel_id, state.message_input)
+    patch(current_channel_id: new_channel_id, message_input: "")
+    restore_draft
+  end
+
+  def component_will_unmount
+    save_draft_now unless Funicular::DraftStore.disabled?
   end
 
   def handle_input(event)
     patch(message_input: event.target[:value])
+    schedule_save_draft
   end
 
   def handle_submit(event)
@@ -28,6 +49,8 @@ class MessageInputComponent < Funicular::Component
     form.reset if form
 
     patch(message_input: "")
+    Funicular::DraftStore.delete(props[:channel_id])
+    cancel_save_timer
 
     props[:on_send_message].call(content)
   end
@@ -53,5 +76,27 @@ class MessageInputComponent < Funicular::Component
         end
       end
     end
+  end
+
+  private
+
+  def restore_draft
+    saved = Funicular::DraftStore.get(props[:channel_id])
+    patch(message_input: saved.to_s) if saved && !saved.to_s.empty?
+  end
+
+  def save_draft_now
+    Funicular::DraftStore.set(props[:channel_id], state.message_input)
+  end
+
+  def schedule_save_draft
+    cancel_save_timer
+    @save_timer = JS.global.setTimeout(300) { save_draft_now }
+  end
+
+  def cancel_save_timer
+    return unless @save_timer
+    JS.global.clearTimeout(@save_timer)
+    @save_timer = nil
   end
 end

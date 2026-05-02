@@ -337,31 +337,6 @@ function unexportedRuntimeSymbol(sym) {
 var readyPromiseResolve, readyPromiseReject;
 
 // Memory management
-var
-/** @type {!Int8Array} */
-  HEAP8,
-/** @type {!Uint8Array} */
-  HEAPU8,
-/** @type {!Int16Array} */
-  HEAP16,
-/** @type {!Uint16Array} */
-  HEAPU16,
-/** @type {!Int32Array} */
-  HEAP32,
-/** @type {!Uint32Array} */
-  HEAPU32,
-/** @type {!Float32Array} */
-  HEAPF32,
-/** @type {!Float64Array} */
-  HEAPF64;
-
-// BigInt64Array type is not correctly defined in closure
-var
-/** not-@type {!BigInt64Array} */
-  HEAP64,
-/* BigUint64Array type is not correctly defined in closure
-/** not-@type {!BigUint64Array} */
-  HEAPU64;
 
 var runtimeInitialized = false;
 
@@ -637,6 +612,36 @@ async function createWasm() {
       }
     }
 
+  /** @type {!Int16Array} */
+  var HEAP16;
+
+  /** @type {!Int32Array} */
+  var HEAP32;
+
+  /** not-@type {!BigInt64Array} */
+  var HEAP64;
+
+  /** @type {!Int8Array} */
+  var HEAP8;
+
+  /** @type {!Float32Array} */
+  var HEAPF32;
+
+  /** @type {!Float64Array} */
+  var HEAPF64;
+
+  /** @type {!Uint16Array} */
+  var HEAPU16;
+
+  /** @type {!Uint32Array} */
+  var HEAPU32;
+
+  /** not-@type {!BigUint64Array} */
+  var HEAPU64;
+
+  /** @type {!Uint8Array} */
+  var HEAPU8;
+
   var callRuntimeCallbacks = (callbacks) => {
       while (callbacks.length > 0) {
         // Pass the module as the first argument.
@@ -672,12 +677,12 @@ async function createWasm() {
 
   var noExitRuntime = true;
 
-  var ptrToString = (ptr) => {
+  function ptrToString(ptr) {
       assert(typeof ptr === 'number', `ptrToString expects a number, got ${typeof ptr}`);
       // Convert to 32-bit unsigned value
       ptr >>>= 0;
       return '0x' + ptr.toString(16).padStart(8, '0');
-    };
+    }
 
   
     /**
@@ -1232,11 +1237,14 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         } else if (FS.isFile(node.mode)) {
           node.node_ops = MEMFS.ops_table.file.node;
           node.stream_ops = MEMFS.ops_table.file.stream;
-          node.usedBytes = 0; // The actual number of bytes used in the typed array, as opposed to contents.length which gives the whole capacity.
-          // When the byte data of the file is populated, this will point to either a typed array, or a normal JS array. Typed arrays are preferred
-          // for performance, and used by default. However, typed arrays are not resizable like normal JS arrays are, so there is a small disk size
-          // penalty involved for appending file writes that continuously grow a file similar to std::vector capacity vs used -scheme.
-          node.contents = null; 
+          // The actual number of bytes used in the typed array, as opposed to
+          // contents.length which gives the whole capacity.
+          node.usedBytes = 0;
+          // The byte data of the file is stored in a typed array.
+          // Note: typed arrays are not resizable like normal JS arrays are, so
+          // there is a small penalty involved for appending file writes that
+          // continuously grow a file similar to std::vector capacity vs used.
+          node.contents = MEMFS.emptyFileContents ??= new Uint8Array(0);
         } else if (FS.isLink(node.mode)) {
           node.node_ops = MEMFS.ops_table.link.node;
           node.stream_ops = MEMFS.ops_table.link.stream;
@@ -1253,36 +1261,30 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         return node;
       },
   getFileDataAsTypedArray(node) {
-        if (!node.contents) return new Uint8Array(0);
-        if (node.contents.subarray) return node.contents.subarray(0, node.usedBytes); // Make sure to not return excess unused bytes.
-        return new Uint8Array(node.contents);
+        assert(FS.isFile(node.mode), 'getFileDataAsTypedArray called on non-file');
+        return node.contents.subarray(0, node.usedBytes); // Make sure to not return excess unused bytes.
       },
   expandFileStorage(node, newCapacity) {
-        var prevCapacity = node.contents ? node.contents.length : 0;
+        var prevCapacity = node.contents.length;
         if (prevCapacity >= newCapacity) return; // No need to expand, the storage was already large enough.
-        // Don't expand strictly to the given requested limit if it's only a very small increase, but instead geometrically grow capacity.
-        // For small filesizes (<1MB), perform size*2 geometric increase, but for large sizes, do a much more conservative size*1.125 increase to
-        // avoid overshooting the allocation cap by a very large margin.
+        // Don't expand strictly to the given requested limit if it's only a very
+        // small increase, but instead geometrically grow capacity.
+        // For small filesizes (<1MB), perform size*2 geometric increase, but for
+        // large sizes, do a much more conservative size*1.125 increase to avoid
+        // overshooting the allocation cap by a very large margin.
         var CAPACITY_DOUBLING_MAX = 1024 * 1024;
         newCapacity = Math.max(newCapacity, (prevCapacity * (prevCapacity < CAPACITY_DOUBLING_MAX ? 2.0 : 1.125)) >>> 0);
-        if (prevCapacity != 0) newCapacity = Math.max(newCapacity, 256); // At minimum allocate 256b for each file when expanding.
-        var oldContents = node.contents;
+        if (prevCapacity) newCapacity = Math.max(newCapacity, 256); // At minimum allocate 256b for each file when expanding.
+        var oldContents = MEMFS.getFileDataAsTypedArray(node);
         node.contents = new Uint8Array(newCapacity); // Allocate new storage.
-        if (node.usedBytes > 0) node.contents.set(oldContents.subarray(0, node.usedBytes), 0); // Copy old data over to the new storage.
+        node.contents.set(oldContents);
       },
   resizeFileStorage(node, newSize) {
         if (node.usedBytes == newSize) return;
-        if (newSize == 0) {
-          node.contents = null; // Fully decommit when requesting a resize to zero.
-          node.usedBytes = 0;
-        } else {
-          var oldContents = node.contents;
-          node.contents = new Uint8Array(newSize); // Allocate new storage.
-          if (oldContents) {
-            node.contents.set(oldContents.subarray(0, Math.min(newSize, node.usedBytes))); // Copy old data over to the new storage.
-          }
-          node.usedBytes = newSize;
-        }
+        var oldContents = node.contents;
+        node.contents = new Uint8Array(newSize); // Allocate new storage.
+        node.contents.set(oldContents.subarray(0, Math.min(newSize, node.usedBytes))); // Copy old data over to the new storage.
+        node.usedBytes = newSize;
       },
   node_ops:{
   getattr(node) {
@@ -1382,16 +1384,11 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           if (position >= stream.node.usedBytes) return 0;
           var size = Math.min(stream.node.usedBytes - position, length);
           assert(size >= 0);
-          if (size > 8 && contents.subarray) { // non-trivial, and typed array
-            buffer.set(contents.subarray(position, position + size), offset);
-          } else {
-            for (var i = 0; i < size; i++) buffer[offset + i] = contents[position + i];
-          }
+          buffer.set(contents.subarray(position, position + size), offset);
           return size;
         },
   write(stream, buffer, offset, length, position, canOwn) {
-          // The data buffer should be a typed array view
-          assert(!(buffer instanceof ArrayBuffer));
+          assert(buffer.subarray, 'FS.write expects a TypedArray');
           // If the buffer is located in main memory (HEAP), and if
           // memory can grow, we can't hold on to references of the
           // memory buffer, as they may get invalidated. That means we
@@ -1404,33 +1401,19 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           var node = stream.node;
           node.mtime = node.ctime = Date.now();
   
-          if (buffer.subarray && (!node.contents || node.contents.subarray)) { // This write is from a typed array to a typed array?
-            if (canOwn) {
-              assert(position === 0, 'canOwn must imply no weird position inside the file');
-              node.contents = buffer.subarray(offset, offset + length);
-              node.usedBytes = length;
-              return length;
-            } else if (node.usedBytes === 0 && position === 0) { // If this is a simple first write to an empty file, do a fast set since we don't need to care about old data.
-              node.contents = buffer.slice(offset, offset + length);
-              node.usedBytes = length;
-              return length;
-            } else if (position + length <= node.usedBytes) { // Writing to an already allocated and used subrange of the file?
-              node.contents.set(buffer.subarray(offset, offset + length), position);
-              return length;
-            }
-          }
-  
-          // Appending to an existing file and we need to reallocate, or source data did not come as a typed array.
-          MEMFS.expandFileStorage(node, position+length);
-          if (node.contents.subarray && buffer.subarray) {
+          if (canOwn) {
+            assert(position === 0, 'canOwn must imply no weird position inside the file');
+            node.contents = buffer.subarray(offset, offset + length);
+            node.usedBytes = length;
+          } else if (node.usedBytes === 0 && position === 0) { // If this is a simple first write to an empty file, do a fast set since we don't need to care about old data.
+            node.contents = buffer.slice(offset, offset + length);
+            node.usedBytes = length;
+          } else {
+            MEMFS.expandFileStorage(node, position+length);
             // Use typed array write which is available.
             node.contents.set(buffer.subarray(offset, offset + length), position);
-          } else {
-            for (var i = 0; i < length; i++) {
-             node.contents[position + i] = buffer[offset + i]; // Or fall back to manual write if not.
-            }
+            node.usedBytes = Math.max(node.usedBytes, position + length);
           }
-          node.usedBytes = Math.max(node.usedBytes, position + length);
           return length;
         },
   llseek(stream, offset, whence) {
@@ -1455,7 +1438,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
           var allocated;
           var contents = stream.node.contents;
           // Only make a new copy when MAP_PRIVATE is specified.
-          if (!(flags & 2) && contents && contents.buffer === HEAP8.buffer) {
+          if (!(flags & 2) && contents.buffer === HEAP8.buffer) {
             // We can't emulate MAP_SHARED when the file is not backed by the
             // buffer we're mapping to (e.g. the HEAP buffer).
             allocated = false;
@@ -1489,6 +1472,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   };
   
   var FS_modeStringToFlags = (str) => {
+      if (typeof str != 'string') return str;
       var flagModes = {
         'r': 0,
         'r+': 2,
@@ -1502,6 +1486,16 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         throw new Error(`Unknown file open mode: ${str}`);
       }
       return flags;
+    };
+  
+  var FS_fileDataToTypedArray = (data) => {
+      if (typeof data == 'string') {
+        data = intArrayFromString(data, true);
+      }
+      if (!data.subarray) {
+        data = new Uint8Array(data);
+      }
+      return data;
     };
   
   var FS_getMode = (canRead, canWrite) => {
@@ -2687,7 +2681,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         if (path === "") {
           throw new FS.ErrnoError(44);
         }
-        flags = typeof flags == 'string' ? FS_modeStringToFlags(flags) : flags;
+        flags = FS_modeStringToFlags(flags);
         if ((flags & 64)) {
           mode = (mode & 4095) | 32768;
         } else {
@@ -2838,6 +2832,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
       },
   write(stream, buffer, offset, length, position, canOwn) {
         assert(offset >= 0);
+        assert(buffer.subarray, 'FS.write expects a TypedArray');
         if (length < 0 || position < 0) {
           throw new FS.ErrnoError(28);
         }
@@ -2923,14 +2918,8 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   writeFile(path, data, opts = {}) {
         opts.flags = opts.flags || 577;
         var stream = FS.open(path, opts.flags, opts.mode);
-        if (typeof data == 'string') {
-          data = new Uint8Array(intArrayFromString(data, true));
-        }
-        if (ArrayBuffer.isView(data)) {
-          FS.write(stream, data, 0, data.byteLength, undefined, opts.canOwn);
-        } else {
-          abort('Unsupported data type');
-        }
+        data = FS_fileDataToTypedArray(data);
+        FS.write(stream, data, 0, data.byteLength, undefined, opts.canOwn);
         FS.close(stream);
       },
   cwd:() => FS.currentPath,
@@ -3155,11 +3144,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         var mode = FS_getMode(canRead, canWrite);
         var node = FS.create(path, mode);
         if (data) {
-          if (typeof data == 'string') {
-            var arr = new Array(data.length);
-            for (var i = 0, len = data.length; i < len; ++i) arr[i] = data.charCodeAt(i);
-            data = arr;
-          }
+          data = FS_fileDataToTypedArray(data);
           // make sure we can write to the file
           FS.chmod(node, mode | 146);
           var stream = FS.open(node, 577);
@@ -3393,24 +3378,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         };
         node.stream_ops = stream_ops;
         return node;
-      },
-  absolutePath() {
-        abort('FS.absolutePath has been removed; use PATH_FS.resolve instead');
-      },
-  createFolder() {
-        abort('FS.createFolder has been removed; use FS.mkdir instead');
-      },
-  createLink() {
-        abort('FS.createLink has been removed; use FS.symlink instead');
-      },
-  joinPath() {
-        abort('FS.joinPath has been removed; use PATH.join instead');
-      },
-  mmapAlloc() {
-        abort('FS.mmapAlloc has been replaced by the top level function mmapAlloc');
-      },
-  standardizePath() {
-        abort('FS.standardizePath has been removed; use PATH.normalize instead');
       },
   };
   
@@ -4095,11 +4062,14 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
         return 'pipe[' + (PIPEFS.nextname.current++) + ']';
       },
   };
-  function ___syscall_pipe(fdPtr) {
+  function ___syscall_pipe2(fdPtr, flags) {
   try {
   
       if (fdPtr == 0) {
         throw new FS.ErrnoError(21);
+      }
+      if (flags && flags != 524288) {
+        throw new FS.ErrnoError(138);
       }
   
       var res = PIPEFS.createPipe();
@@ -4935,6 +4905,7 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
 
 
 
+
   FS.createPreloadedFile = FS_createPreloadedFile;
   FS.preloadFile = FS_preloadFile;
   FS.staticInit();;
@@ -5153,20 +5124,20 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'callMain',
   'abort',
   'wasmExports',
-  'HEAPF32',
-  'HEAPF64',
-  'HEAP8',
-  'HEAP16',
-  'HEAPU16',
-  'HEAP32',
-  'HEAPU32',
-  'HEAP64',
-  'HEAPU64',
   'writeStackCookie',
   'checkStackCookie',
   'INT53_MAX',
   'INT53_MIN',
   'bigintToI53Checked',
+  'HEAP8',
+  'HEAP16',
+  'HEAPU16',
+  'HEAP32',
+  'HEAPU32',
+  'HEAPF32',
+  'HEAPF64',
+  'HEAP64',
+  'HEAPU64',
   'stackSave',
   'stackRestore',
   'stackAlloc',
@@ -5252,6 +5223,7 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'FS_preloadFile',
   'FS_modeStringToFlags',
   'FS_getMode',
+  'FS_fileDataToTypedArray',
   'FS_stdin_getChar_buffer',
   'FS_stdin_getChar',
   'FS_unlink',
@@ -5364,12 +5336,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'FS_createDataFile',
   'FS_forceLoadFile',
   'FS_createLazyFile',
-  'FS_absolutePath',
-  'FS_createFolder',
-  'FS_createLink',
-  'FS_joinPath',
-  'FS_mmapAlloc',
-  'FS_standardizePath',
   'MEMFS',
   'TTY',
   'PIPEFS',
@@ -5401,16 +5367,20 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
   ignoredModuleProp('logReadFiles');
   ignoredModuleProp('loadSplitModule');
+  ignoredModuleProp('onMalloc');
+  ignoredModuleProp('onRealloc');
+  ignoredModuleProp('onFree');
+  ignoredModuleProp('onSbrkGrow');
 }
 var ASM_CONSTS = {
-  2553341: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2553381: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2553421: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2553462: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2553500: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2553538: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2553611: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2553750: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2589192: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2589232: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2589272: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2589313: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2589351: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2589389: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2589462: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2589601: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }
@@ -5429,10 +5399,11 @@ function get_property(ref_id,key) { try { const obj = globalThis.picorubyRefs[re
 function get_js_type(ref_id) { try { const value = globalThis.picorubyRefs[ref_id]; const type = typeof value; if (value === null) return 1; if (value === undefined) return 0; if (type === 'boolean') return 2; if (type === 'number') return 3; if (type === 'string') return 5; if (value instanceof String) return 5; if (Array.isArray(value)) return 7; if (type === 'function') return 9; return 8; } catch(e) { console.error('Error in get_js_type (JS side):', e); return 0; } }
 function get_js_property_type(ref_id,property_name) { try { const obj = globalThis.picorubyRefs[ref_id]; const propName = UTF8ToString(property_name); const value = obj[propName]; const type = typeof value; if (value === null) return 1; if (value === undefined) return 0; if (type === 'boolean') return 2; if (type === 'number') return 3; if (type === 'string') return 5; if (value instanceof String) return 5; if (Array.isArray(value)) return 7; if (type === 'function') return 9; return 8; } catch(e) { return 0; } }
 function get_boolean_value(ref_id) { return globalThis.picorubyRefs[ref_id] ? true : false; }
+function js_classify_composite(ref_id) { try { const v = globalThis.picorubyRefs[ref_id]; if (Array.isArray(v)) return 1; if (typeof v === 'function') return 2; if (typeof Promise !== 'undefined' && v instanceof Promise) return 3; return 0; } catch(e) { return 0; } }
+function js_classify_dom(ref_id) { try { const v = globalThis.picorubyRefs[ref_id]; if (typeof Event !== 'undefined' && v instanceof Event) return 1; if (typeof Response !== 'undefined' && v instanceof Response) return 2; if (typeof Element !== 'undefined' && (v instanceof Element || (typeof Document !== 'undefined' && v instanceof Document))) return 3; return 0; } catch(e) { return 0; } }
 function get_number_value(ref_id) { return globalThis.picorubyRefs[ref_id]; }
 function get_string_value_length(ref_id) { const str = globalThis.picorubyRefs[ref_id]; return lengthBytesUTF8(str); }
 function copy_string_value(ref_id,buffer,buffer_size) { const str = globalThis.picorubyRefs[ref_id]; stringToUTF8(str, buffer, buffer_size); }
-function js_string_equals(ref_id,ruby_str,ruby_str_len) { const js_str = globalThis.picorubyRefs[ref_id]; return js_str === UTF8ToString(ruby_str, ruby_str_len); }
 function get_length(ref_id) { try { const obj = globalThis.picorubyRefs[ref_id]; return obj.length || 0; } catch(e) { return -1; } }
 function call_method(ref_id,method,arg,arg_len) { try { const obj = globalThis.picorubyRefs[ref_id]; const methodName = UTF8ToString(method); const func = obj[methodName]; const argString = UTF8ToString(arg, arg_len); let result; if (methodName === 'new') { result = new obj(argString); } else { if (typeof func !== 'function') { console.error('Method not found or not a function:', methodName); return -1; } result = func.call(obj, argString); } const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error(e); return -1; } }
 function call_method_no_arg(ref_id,method) { try { const obj = globalThis.picorubyRefs[ref_id]; const methodName = UTF8ToString(method); const func = obj[methodName]; if (typeof func !== 'function') { console.error('Method not found or not a function:', methodName); return -1; } let result = func.call(obj); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error(e); return -1; } }
@@ -5444,6 +5415,7 @@ function call_method_with_ref_ref(ref_id,method,arg_ref_1_id,arg_ref_2_id) { try
 function call_method_with_ref_str_str(ref_id,method,arg1_ref_id,arg2_str,arg2_len,arg3_str,arg3_len) { try { const obj = globalThis.picorubyRefs[ref_id]; const methodName = UTF8ToString(method); const func = obj[methodName]; const argObj1 = globalThis.picorubyRefs[arg1_ref_id]; const argString2 = UTF8ToString(arg2_str, arg2_len); const argString3 = UTF8ToString(arg3_str, arg3_len); if (typeof func !== 'function') { console.error('Method not found or not a function:', methodName); return -1; } let result = func.call(obj, argObj1, argString2, argString3); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error('Error in call_method_with_ref_str_str:', e); return -1; } }
 function call_method_with_args(ref_id,method,args_json,args_json_len) { try { const obj = globalThis.picorubyRefs[ref_id]; const methodName = UTF8ToString(method); const func = obj[methodName]; if (typeof func !== 'function') { console.error('Method not found or not a function:', methodName); return -1; } const argsStr = UTF8ToString(args_json, args_json_len); const argsData = JSON.parse(argsStr); if (!Array.isArray(argsData)) { console.error('args_json must be a JSON array'); return -1; } const args = argsData.map(arg => { switch (arg.type) { case 'string': return arg.value; case 'integer': return arg.value; case 'float': return arg.value; case 'boolean': return arg.value; case 'ref': return globalThis.picorubyRefs[arg.value]; case 'nil': return null; default: console.error('Unknown argument type:', arg.type); return null; } }); const result = func.call(obj, ...args); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error('Error in call_method_with_args:', e); return -1; } }
 function call_constructor_with_args(ref_id,args_json,args_json_len) { try { const ctor = globalThis.picorubyRefs[ref_id]; if (typeof ctor !== 'function') { console.error('Object is not a constructor function'); return -1; } const argsStr = UTF8ToString(args_json, args_json_len); const argsData = JSON.parse(argsStr); if (!Array.isArray(argsData)) { console.error('args_json must be a JSON array'); return -1; } const args = argsData.map(arg => { switch (arg.type) { case 'string': return arg.value; case 'integer': return arg.value; case 'float': return arg.value; case 'boolean': return arg.value; case 'ref': return globalThis.picorubyRefs[arg.value]; case 'nil': return null; default: console.error('Unknown argument type:', arg.type); return null; } }); const result = new ctor(...args); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error('Error in call_constructor_with_args:', e); return -1; } }
+function js_function_apply_args(func_ref_id,args_json,args_json_len) { try { const fn = globalThis.picorubyRefs[func_ref_id]; if (typeof fn !== 'function') { console.error('js_function_apply_args: not a function'); return -1; } const argsData = JSON.parse(UTF8ToString(args_json, args_json_len)); if (!Array.isArray(argsData)) { console.error('js_function_apply_args: args_json must be a JSON array'); return -1; } const args = argsData.map(arg => { switch (arg.type) { case 'string': case 'integer': case 'float': case 'boolean': return arg.value; case 'ref': return globalThis.picorubyRefs[arg.value]; case 'nil': return null; default: return null; } }); const result = fn(...args); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error('Error in js_function_apply_args:', e); return -1; } }
 function call_fetch_with_json_options(ref_id,url,options_json) { try { const obj = globalThis.picorubyRefs[ref_id]; const urlStr = UTF8ToString(url); const optionsStr = UTF8ToString(options_json); const options = JSON.parse(optionsStr); const result = obj.fetch(urlStr, options); const newRefId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return newRefId; } catch(e) { console.error(e); return -1; } }
 function setup_promise_handler(promise_id,callback_id,mrb_ptr,task_ptr) { const promise = globalThis.picorubyRefs[promise_id]; promise.then( (result) => { const resultId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); ccall( 'resume_promise_task', 'void', ['number', 'number', 'number', 'number'], [mrb_ptr, task_ptr, callback_id, resultId] ); } ); }
 function js_add_event_listener(ref_id,callback_id,event_type) { const target = globalThis.picorubyRefs[ref_id]; const type = UTF8ToString(event_type); const handler = (event) => { if (!globalThis.picorubyEventHandlers || !globalThis.picorubyEventHandlers[callback_id]) { return; } if (type === 'submit' || (type === 'click' && target.tagName === 'A')) { event.preventDefault(); } const eventRefId = globalThis.picorubyRefs.push(event) - 1; ccall( 'call_ruby_callback', 'void', ['number', 'number'], [callback_id, eventRefId] ); }; target.addEventListener(type, handler); if (!globalThis.picorubyEventHandlers) { globalThis.picorubyEventHandlers = {}; } globalThis.picorubyEventHandlers[callback_id] = { target, type, handler }; }
@@ -5466,6 +5438,7 @@ function setup_binary_handler(ref_id,mrb_ptr,task_ptr,callback_id) { const respo
 function init_js_type_offsets(type_offset,value_offset,is_integer_offset,string_value_offset) { globalThis.JS_TYPE_INFO_OFFSETS = { type: type_offset, value: value_offset, is_integer: is_integer_offset, string_value: string_value_offset }; }
 function js_get_type_info(ref_id,info) { const value = globalThis.picorubyRefs[ref_id]; const offsets = globalThis.JS_TYPE_INFO_OFFSETS; let type = typeof value; if (value === null) { HEAP32[info + offsets.type >> 2] = 1; HEAP32[info + offsets.string_value >> 2] = 0; } else if (Array.isArray(value)) { HEAP32[info + offsets.type >> 2] = 7; HEAP32[info + offsets.value >> 2] = value.length; HEAP32[info + offsets.string_value >> 2] = 0; } else { switch(type) { case "undefined": HEAP32[info + offsets.type >> 2] = 0; HEAP32[info + offsets.string_value >> 2] = 0; break; case "boolean": HEAP32[info + offsets.type >> 2] = 2; HEAPU8[info + offsets.value] = value ? 1 : 0; HEAP32[info + offsets.string_value >> 2] = 0; break; case "number": HEAP32[info + offsets.type >> 2] = 3; HEAPF64[info + offsets.value >> 3] = value; HEAPU8[info + offsets.is_integer] = Number.isInteger(value) ? 1 : 0; HEAP32[info + offsets.string_value >> 2] = 0; break; case "bigint": case "string": case "symbol": { HEAP32[info + offsets.type >> 2] = type === "bigint" ? 4 : type === "string" ? 5 : 6; const str = type === "symbol" ? (value.description || "") : value.toString(); const length = lengthBytesUTF8(str) + 1; const ptr = _malloc(length); stringToUTF8(str, ptr, length); HEAP32[info + offsets.string_value >> 2] = ptr; break; } case "object": HEAP32[info + offsets.type >> 2] = 8; HEAP32[info + offsets.string_value >> 2] = 0; break; case "function": HEAP32[info + offsets.type >> 2] = 9; HEAP32[info + offsets.string_value >> 2] = 0; break; } } }
 function js_eval(script) { try { var result = (0, eval)(UTF8ToString(script)); if (result === undefined || result === null) return -1; var refId = globalThis.picorubyRefs.length; globalThis.picorubyRefs.push(result); return refId; } catch(e) { console.error('JS.eval error:', e); return -1; } }
+function js_inspect_to_buffer(ref_id,buf,buf_size) { function clip(s, max) { if (s.length > max) return s.slice(0, max - 3) + '...'; return s; } function previewValue(val) { if (val === null) return 'null'; if (val === undefined) return 'undefined'; const t = typeof val; if (t === 'string') return JSON.stringify(val); if (t === 'number' || t === 'boolean') return String(val); if (t === 'bigint') return val.toString() + 'n'; if (t === 'symbol') return val.toString(); if (t === 'function') return 'function'; return '...'; } let result; try { const v = globalThis.picorubyRefs[ref_id]; if (v === null) { result = 'null'; } else if (v === undefined) { result = 'undefined'; } else if (typeof v === 'string') { result = 'String ' + clip(JSON.stringify(v), 120); } else if (typeof v === 'number') { result = 'Number ' + String(v); } else if (typeof v === 'boolean') { result = 'Boolean ' + (v ? 'true' : 'false'); } else if (typeof v === 'bigint') { result = 'BigInt ' + v.toString() + 'n'; } else if (typeof v === 'symbol') { result = 'Symbol ' + v.toString(); } else if (typeof v === 'function') { const name = v.name && v.name.length > 0 ? v.name : '(anonymous)'; result = 'Function ' + name; } else if (Array.isArray(v)) { const len = v.length; const sample = v.slice(0, 5).map(previewValue).join(','); const preview = len > 5 ? '[' + sample + ',...]' : '[' + sample + ']'; result = 'Array length=' + len + ' ' + clip(preview, 120); } else { let ctor = 'Object'; try { if (v.constructor && v.constructor.name) ctor = v.constructor.name; } catch (e) {} let extras = ''; try { if (typeof Event !== 'undefined' && v instanceof Event) { if (v.type) extras += ' type=' + JSON.stringify(String(v.type)); } else if (typeof Response !== 'undefined' && v instanceof Response) { if (v.status !== undefined) extras += ' status=' + v.status; if (v.url) extras += ' url=' + JSON.stringify(String(v.url)); } else if (typeof Element !== 'undefined' && v instanceof Element) { if (v.id) extras += ' id=' + JSON.stringify(String(v.id)); const cls = v.getAttribute && v.getAttribute('class'); if (cls) extras += ' class=' + JSON.stringify(String(cls)); } else { const keys = Object.keys(v).slice(0, 3); if (keys.length > 0) { const items = keys.map(function(k) { return k + '=' + previewValue(v[k]); }); extras = ' ' + items.join(' '); if (Object.keys(v).length > 3) extras += ' ...'; } } } catch (e) {} result = ctor + extras; } } catch (e) { result = '<inspect error: ' + (e && e.message ? e.message : 'unknown') + '>'; } if (buf_size > 0) { if (result.length > buf_size - 1) { result = result.slice(0, buf_size - 4) + '...'; } stringToUTF8(result, buf, buf_size); } }
 function regexp_new(pattern,flags) { try { var re = new RegExp(UTF8ToString(pattern), UTF8ToString(flags)); return globalThis.picorubyRefs.push(re) - 1; } catch(e) { console.error('RegExp creation failed:', e); return -1; } }
 function regexp_test(ref_id,str,str_len) { try { var re = globalThis.picorubyRefs[ref_id]; re.lastIndex = 0; return re.test(UTF8ToString(str, str_len)) ? 1 : 0; } catch(e) { return 0; } }
 function regexp_exec(ref_id,str,str_len) { try { var re = globalThis.picorubyRefs[ref_id]; re.lastIndex = 0; var result = re.exec(UTF8ToString(str, str_len)); if (result === null) return -1; return globalThis.picorubyRefs.push(result) - 1; } catch(e) { return -1; } }
@@ -5502,6 +5475,9 @@ function ws_set_onopen(ref_id,callback_id) { const ws = globalThis.picorubyRefs[
 function ws_set_onmessage(ref_id,callback_id) { const ws = globalThis.picorubyRefs[ref_id]; ws.onmessage = (event) => { let data = event.data; if (data instanceof ArrayBuffer) { const uint8Array = new Uint8Array(data); const length = uint8Array.length; const ptr = _malloc(length); HEAPU8.set(uint8Array, ptr); ccall( 'call_ruby_callback_with_binary_data', 'void', ['number', 'number', 'number'], [callback_id, ptr, length] ); } else { const eventRefId = globalThis.picorubyRefs.push(event) - 1; ccall( 'call_ruby_callback', 'void', ['number', 'number'], [callback_id, eventRefId] ); } }; }
 function ws_set_onerror(ref_id,callback_id) { const ws = globalThis.picorubyRefs[ref_id]; ws.onerror = (event) => { const eventRefId = globalThis.picorubyRefs.push(event) - 1; ccall( 'call_ruby_callback', 'void', ['number', 'number'], [callback_id, eventRefId] ); }; }
 function ws_set_onclose(ref_id,callback_id) { const ws = globalThis.picorubyRefs[ref_id]; ws.onclose = (event) => { const eventRefId = globalThis.picorubyRefs.push(event) - 1; ccall( 'call_ruby_callback', 'void', ['number', 'number'], [callback_id, eventRefId] ); }; }
+function idb_request_to_promise(req_ref_id) { try { const req = globalThis.picorubyRefs[req_ref_id]; if (!req) { console.error('idb_request_to_promise: invalid ref_id', req_ref_id); return -1; } const promise = new Promise((resolve, reject) => { req.onsuccess = () => { resolve(req.result); }; req.onerror = () => { const msg = (req.error && req.error.message) || 'IDB request failed'; reject(new Error(msg)); }; }); return globalThis.picorubyRefs.push(promise) - 1; } catch (e) { console.error('idb_request_to_promise failed:', e); return -1; } }
+function idb_open_with_upgrade(name_ptr,version,callback_id) { try { const name = UTF8ToString(name_ptr); const idb = globalThis.indexedDB; if (!idb) { console.error('idb_open_with_upgrade: indexedDB unavailable'); return -1; } const req = (version > 0) ? idb.open(name, version) : idb.open(name); req.onupgradeneeded = (event) => { if (callback_id === 0) return; const db = req.result; const oldV = event.oldVersion; const newV = event.newVersion; const dbRef = globalThis.picorubyRefs.push(db) - 1; const oldRef = globalThis.picorubyRefs.push(oldV) - 1; const newRef = globalThis.picorubyRefs.push(newV) - 1; const argRefIds = [dbRef, oldRef, newRef]; const argRefIdsPtr = _malloc(argRefIds.length * 4); for (let i = 0; i < argRefIds.length; i++) { HEAP32[(argRefIdsPtr >> 2) + i] = argRefIds[i]; } try { ccall( 'call_ruby_callback_sync_generic', 'number', ['number', 'number', 'number'], [callback_id, argRefIdsPtr, argRefIds.length] ); } catch (e) { console.error('idb upgrade callback threw:', e); } finally { _free(argRefIdsPtr); } }; const promise = new Promise((resolve, reject) => { req.onsuccess = () => { resolve(req.result); }; req.onerror = () => { const msg = (req.error && req.error.message) || 'IDB open failed'; reject(new Error(msg)); }; req.onblocked = () => { reject(new Error('IDB open blocked: another connection holds an older version')); }; }); return globalThis.picorubyRefs.push(promise) - 1; } catch (e) { console.error('idb_open_with_upgrade failed:', e); return -1; } }
+function idb_transaction_to_promise(tx_ref_id) { try { const tx = globalThis.picorubyRefs[tx_ref_id]; if (!tx) { console.error('idb_transaction_to_promise: invalid ref_id', tx_ref_id); return -1; } const promise = new Promise((resolve, reject) => { tx.oncomplete = () => { resolve(true); }; tx.onerror = () => { const msg = (tx.error && tx.error.message) || 'IDB transaction error'; reject(new Error(msg)); }; tx.onabort = () => { const msg = (tx.error && tx.error.message) || 'IDB transaction aborted'; reject(new Error(msg)); }; }); return globalThis.picorubyRefs.push(promise) - 1; } catch (e) { console.error('idb_transaction_to_promise failed:', e); return -1; } }
 function emscripten_date_now() { return Date.now(); }
 
 // Imports from the Wasm binary.
@@ -5663,7 +5639,7 @@ var wasmImports = {
   /** @export */
   __syscall_openat: ___syscall_openat,
   /** @export */
-  __syscall_pipe: ___syscall_pipe,
+  __syscall_pipe2: ___syscall_pipe2,
   /** @export */
   __syscall_poll: ___syscall_poll,
   /** @export */
@@ -5773,6 +5749,12 @@ var wasmImports = {
   /** @export */
   get_string_value_length,
   /** @export */
+  idb_open_with_upgrade,
+  /** @export */
+  idb_request_to_promise,
+  /** @export */
+  idb_transaction_to_promise,
+  /** @export */
   init_js_refs,
   /** @export */
   init_js_type_offsets,
@@ -5833,6 +5815,10 @@ var wasmImports = {
   /** @export */
   js_append_child,
   /** @export */
+  js_classify_composite,
+  /** @export */
+  js_classify_dom,
+  /** @export */
   js_clear_timeout,
   /** @export */
   js_create_array,
@@ -5847,9 +5833,13 @@ var wasmImports = {
   /** @export */
   js_eval,
   /** @export */
+  js_function_apply_args,
+  /** @export */
   js_get_type_info,
   /** @export */
   js_insert_before,
+  /** @export */
+  js_inspect_to_buffer,
   /** @export */
   js_register_generic_callback,
   /** @export */
@@ -5864,8 +5854,6 @@ var wasmImports = {
   js_set_attribute,
   /** @export */
   js_set_timeout,
-  /** @export */
-  js_string_equals,
   /** @export */
   proc_exit: _proc_exit,
   /** @export */

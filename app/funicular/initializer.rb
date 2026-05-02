@@ -6,6 +6,9 @@ Funicular.debug_color = "pink"  # Options: "green", "yellow", "pink", "cyan", or
 # Mount JavaScript helpers
 Funicular::FileUpload.mount
 
+# Initialize draft store (defined in stores/draft_store.rb)
+Funicular::DraftStore.init!
+
 # Load all model schemas before starting the app
 Funicular.load_schemas({ User => "user", Session => "session", Channel => "channel" }) do
   # Start the application after all schemas are loaded
