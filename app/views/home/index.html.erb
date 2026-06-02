@@ -1,3 +1,9 @@
-<div id="app"></div>
+<%# When @ssr is present (e.g. /explore), the server-rendered markup is placed %>
+<%# inside #app and the client hydrates it. Otherwise #app is empty and the %>
+<%# client renders from scratch (plain CSR). %>
+<%= funicular_app_container(@ssr ? @ssr[:html] : "") %>
+<% if @ssr %>
+  <%= funicular_state_tag(@ssr[:state]) %>
+<% end %>
 
 <script type="application/x-mrb" src="<%= asset_path('app.mrb') %>"></script>

@@ -794,6 +794,21 @@ async function createWasm() {
   var ___assert_fail = (condition, filename, line, func) =>
       abort(`Assertion failed: ${UTF8ToString(condition)}, at: ` + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
 
+  var wasmTableMirror = [];
+  
+  
+  var getWasmTableEntry = (funcPtr) => {
+      var func = wasmTableMirror[funcPtr];
+      if (!func) {
+        /** @suppress {checkTypes} */
+        wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
+      }
+      /** @suppress {checkTypes} */
+      assert(wasmTable.get(funcPtr) == func, 'JavaScript-side Wasm function table mirror is out of date!');
+      return func;
+    };
+  var ___call_sighandler = (fp, sig) => getWasmTableEntry(fp)(sig);
+
   var PATH = {
   isAbs:(path) => path.charAt(0) === '/',
   splitPath:(filename) => {
@@ -4242,6 +4257,12 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   var __abort_js = () =>
       abort('native code called abort()');
 
+  var runtimeKeepaliveCounter = 0;
+  var __emscripten_runtime_keepalive_clear = () => {
+      noExitRuntime = false;
+      runtimeKeepaliveCounter = 0;
+    };
+
   var __emscripten_throw_longjmp = () => {
       throw Infinity;
     };
@@ -4621,7 +4642,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
     };
 
   
-  var runtimeKeepaliveCounter = 0;
   var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
   var _proc_exit = (code) => {
       EXITSTATUS = code;
@@ -4826,19 +4846,6 @@ var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   }
 
 
-  var wasmTableMirror = [];
-  
-  
-  var getWasmTableEntry = (funcPtr) => {
-      var func = wasmTableMirror[funcPtr];
-      if (!func) {
-        /** @suppress {checkTypes} */
-        wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
-      }
-      /** @suppress {checkTypes} */
-      assert(wasmTable.get(funcPtr) == func, 'JavaScript-side Wasm function table mirror is out of date!');
-      return func;
-    };
 
   var getCFunc = (ident) => {
       var func = Module['_' + ident]; // closure exported function
@@ -5404,14 +5411,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('loadSplitModule');
 }
 var ASM_CONSTS = {
-  2614967: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2615007: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2615047: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2615088: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2615126: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2615164: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2615237: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2615376: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2623799: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2623839: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2623879: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2623920: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2623958: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2623996: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2624069: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2624208: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }
@@ -5649,6 +5656,8 @@ var wasmImports = {
   /** @export */
   __assert_fail: ___assert_fail,
   /** @export */
+  __call_sighandler: ___call_sighandler,
+  /** @export */
   __syscall_chdir: ___syscall_chdir,
   /** @export */
   __syscall_chmod: ___syscall_chmod,
@@ -5694,6 +5703,8 @@ var wasmImports = {
   __syscall_unlinkat: ___syscall_unlinkat,
   /** @export */
   _abort_js: __abort_js,
+  /** @export */
+  _emscripten_runtime_keepalive_clear: __emscripten_runtime_keepalive_clear,
   /** @export */
   _emscripten_throw_longjmp: __emscripten_throw_longjmp,
   /** @export */
