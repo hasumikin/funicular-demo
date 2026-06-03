@@ -15,6 +15,7 @@ class LoginComponent < Funicular::Component
            }
 
     hint "mt-6 text-center text-sm text-gray-600"
+    hint_link "text-blue-600 hover:underline"
   end
 
   def initialize_state
@@ -67,7 +68,10 @@ class LoginComponent < Funicular::Component
         end
 
         div(class: s.hint) do
-          span { "Demo use only" }
+          span { "Demo use only - " }
+          link_to "/blog", navigate: true, class: s.hint_link do
+            span { "read our blog" }
+          end
         end
       end
     end

@@ -10,6 +10,8 @@ class ChannelIndexComponent < Funicular::Component
     desc "text-gray-600 text-sm mt-1"
     preview "text-gray-400 text-xs mt-2"
     empty "text-gray-500"
+    nav "mb-6 text-sm"
+    nav_link "text-blue-600 hover:underline"
   end
 
   def initialize_state
@@ -19,6 +21,11 @@ class ChannelIndexComponent < Funicular::Component
   def render
     div(class: s.container) do
       div(class: s.inner) do
+        div(class: s.nav) do
+          link_to "/blog", navigate: true, class: s.nav_link do
+            span { "Read our blog" }
+          end
+        end
         h1(class: s.title) { "Explore Channels" }
         p(class: s.lead) do
           "This page is rendered on the server by Funicular and hydrated in the browser."

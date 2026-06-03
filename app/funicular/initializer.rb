@@ -11,11 +11,14 @@ Funicular::FileUpload.mount
 Funicular::DraftStore.init! unless Funicular.server?
 
 # Load all model schemas before starting the app
-Funicular.load_schemas({ User => "user", Session => "session", Channel => "channel" }) do
+Funicular.load_schemas({ User => "user", Session => "session", Channel => "channel", Post => "post", Comment => "comment" }) do
   # Start the application after all schemas are loaded
   Funicular.start(container: 'app') do |router|
     # Public, server-rendered channel directory (SSR + hydration demo).
     router.get('/explore', to: ChannelIndexComponent, as: 'explore')
+    # Public, server-rendered tech blog (SSR + hydration demo).
+    router.get('/blog', to: BlogIndexComponent, as: 'blog')
+    router.get('/blog/:id', to: BlogPostComponent, as: 'blog_post', constraints: { id: /\d+/ })
     router.get('/login', to: LoginComponent, as: 'login')
     router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel', constraints: { channel_id: /\d+/ })
     router.get('/chat', to: ChatComponent, as: 'chat')

@@ -15,6 +15,7 @@ class ChannelListComponent < Funicular::Component
     user_info "p-4 bg-gray-900 border-t border-gray-700"
     user_name "text-sm font-semibold"
     user_handle "text-xs text-gray-400"
+    blog_link "mt-2 inline-block text-sm text-blue-400 hover:text-blue-300 cursor-pointer"
     logout_button "mt-2 text-sm text-red-400 hover:text-red-300 cursor-pointer"
   end
 
@@ -41,6 +42,11 @@ class ChannelListComponent < Funicular::Component
         div(class: s.user_info) do
           div(class: s.user_name) { props[:current_user].display_name }
           div(class: s.user_handle) { "@#{props[:current_user].username}" }
+          div do
+            link_to "/blog", navigate: true, class: s.blog_link do
+              span { "Read our blog" }
+            end
+          end
           button(onclick: props[:on_logout], class: s.logout_button) do
             span { "Logout" }
           end

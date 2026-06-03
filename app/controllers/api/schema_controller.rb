@@ -46,4 +46,37 @@ class Api::SchemaController < ApplicationController
       }
     }
   end
+
+  def post
+    render json: {
+      attributes: {
+        "id" => { type: "integer", readonly: true },
+        "title" => { type: "string", readonly: true },
+        "body" => { type: "string", readonly: true },
+        "author_name" => { type: "string", readonly: true },
+        "published_at" => { type: "string", readonly: true },
+        "excerpt" => { type: "string", readonly: true },
+        "comments" => { type: "array", readonly: true }
+      },
+      endpoints: {
+        "all" => { method: "GET", path: "/posts" },
+        "find" => { method: "GET", path: "/posts/:id" }
+      }
+    }
+  end
+
+  def comment
+    render json: {
+      attributes: {
+        "id" => { type: "integer", readonly: true },
+        "post_id" => { type: "integer", readonly: false },
+        "body" => { type: "string", readonly: false },
+        "author_name" => { type: "string", readonly: true },
+        "created_at" => { type: "string", readonly: true }
+      },
+      endpoints: {
+        "create" => { method: "POST", path: "/comments" }
+      }
+    }
+  end
 end

@@ -7,6 +7,8 @@ Rails.application.routes.draw do
 
   resources :channels, only: [:index, :show]
   resources :messages, only: [:destroy]
+  resources :posts, only: [:index, :show]
+  resources :comments, only: [:create]
   resources :users, only: [:show, :update] do
     member do
       get :avatar
@@ -17,6 +19,8 @@ Rails.application.routes.draw do
     get "schema/user", to: "schema#user"
     get "schema/session", to: "schema#session"
     get "schema/channel", to: "schema#channel"
+    get "schema/post", to: "schema#post"
+    get "schema/comment", to: "schema#comment"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
