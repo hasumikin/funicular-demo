@@ -5411,14 +5411,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('loadSplitModule');
 }
 var ASM_CONSTS = {
-  2622919: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2622959: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2622999: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2623040: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2623078: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2623116: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2623189: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2623328: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2635831: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2635871: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2635911: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2635952: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2635990: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2636028: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2636101: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2636240: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }

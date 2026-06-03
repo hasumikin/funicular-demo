@@ -1,6 +1,11 @@
 class Api::SchemaController < ApplicationController
   def user
-    render json: {
+    # Schema.build inlines the User model's ActiveRecord validations into each
+    # attribute entry. Only the attributes declared here are introspected
+    # (allowlist); `except` drops kinds we don't want on the client; uniqueness
+    # is database-only and is skipped automatically.
+    render json: Funicular::Schema.build(
+      User,
       attributes: {
         "id" => { type: "integer", readonly: true },
         "username" => { type: "string", readonly: true },
@@ -15,8 +20,9 @@ class Api::SchemaController < ApplicationController
       endpoints: {
         "find" => { method: "GET", path: "/users/:id" },
         "update" => { method: "PATCH", path: "/users/:id" }
-      }
-    }
+      },
+      except: { username: [:format] }
+    )
   end
 
   def session

@@ -4,7 +4,7 @@ class User < ApplicationRecord
   has_many :messages, dependent: :destroy
 
   validates :username, presence: true, uniqueness: true
-  validates :display_name, presence: true
+  validates :display_name, presence: true, length: { maximum: 30 }
 
   before_validation :set_default_display_name
 

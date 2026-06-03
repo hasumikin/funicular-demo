@@ -108,6 +108,10 @@ class SettingsComponent < Funicular::Component
             display_name: current_user.display_name
           }
         )
+      elsif result.respond_to?(:messages)
+        # Client-side validation failed before any request: show inline,
+        # per-field errors (rendered by form_for beside each field).
+        patch(saving: false, errors: result.messages)
       else
         patch(saving: false, message: "Error: #{result}", is_error: true)
       end
