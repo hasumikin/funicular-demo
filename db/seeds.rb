@@ -69,7 +69,70 @@ if Message.count == 0
   ])
 end
 
+# Create blog posts (authored by a fictional admin; no admin UI exists).
+# These are read from the DB and server-rendered on the public /blog pages.
+blog_author = "Funicular Team"
+
+intro = Post.find_or_create_by!(title: "Why we built this chat on Funicular") do |p|
+  p.author_name = blog_author
+  p.published_at = Time.utc(2026, 1, 12, 9, 0, 0)
+  p.body = <<~BODY.strip
+    This chat app is a demo for Funicular, a Ruby-first frontend framework that
+    runs your component code as PicoRuby in the browser via WebAssembly. The same
+    component classes you write for the client also run on the server under CRuby,
+    which is what makes server-side rendering possible without a second codebase.
+
+    The chat itself is a single-page application: channels, messages and presence
+    are all driven by Ruby components talking to Rails over Action Cable. No
+    JavaScript was written by hand to build it.
+  BODY
+end
+
+ssr_post = Post.find_or_create_by!(title: "Server-side rendering and hydration, in Ruby") do |p|
+  p.author_name = blog_author
+  p.published_at = Time.utc(2026, 2, 3, 9, 0, 0)
+  p.body = <<~BODY.strip
+    A component's render method is just pure Ruby that returns a virtual DOM tree.
+    On the server we walk that tree and serialize it to an HTML string, inject the
+    same data as window state, and send data-filled markup to the browser. You get
+    a fast first paint and real content in "View Source" for search engines.
+
+    In the browser the same component hydrates that markup: it rebuilds the virtual
+    DOM from the injected state and attaches event listeners to the existing nodes
+    instead of rebuilding them. From there it behaves like a normal SPA. This very
+    blog page is server-rendered and then hydrated.
+  BODY
+end
+
+pico_post = Post.find_or_create_by!(title: "PicoRuby: Ruby small enough for a microcontroller") do |p|
+  p.author_name = blog_author
+  p.published_at = Time.utc(2026, 3, 18, 9, 0, 0)
+  p.body = <<~BODY.strip
+    PicoRuby is a compact mruby implementation that runs on devices as small as
+    the RP2040. The same runtime, compiled to WebAssembly, is what powers Funicular
+    in the browser. Being able to run Ruby in such constrained environments is what
+    keeps the framework small and fast to start.
+
+    Our long-term dream is cursed and wonderful: run a meaningful slice of this chat
+    client on an actual microcontroller. We are not there yet, but the pieces exist.
+  BODY
+end
+
+# Seed a few comments so anonymous visitors see real threads (also SSR'd).
+if Comment.count == 0
+  Comment.create!([
+    { post: intro,     user: joker,     body: "No hand-written JS at all? I need to read the source to believe it." },
+    { post: intro,     user: yancya,    body: "The Action Cable wiring is clean. Nicely done." },
+    { post: ssr_post,  user: hasumikin, body: "Hydration matching the server output is the tricky part. Glad it just works." },
+    { post: ssr_post,  user: joker,     body: "View Source actually shows the article text. Respect." },
+    { post: pico_post, user: yancya,    body: "Running this on an RP2040 would be gloriously cursed." },
+    { post: pico_post, user: hasumikin, body: "Give me time. Soldering is the easy part." }
+  ])
+end
+
 puts "Seed data created successfully!"
 puts "Users: #{User.count}"
 puts "Channels: #{Channel.count}"
 puts "Messages: #{Message.count}"
+puts "Posts: #{Post.count}"
+puts "Comments: #{Comment.count}"
