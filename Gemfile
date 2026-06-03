@@ -22,4 +22,6 @@ gem "funicular", path: "~/work/funicular"
 group :development do
   gem "debug", platforms: %i[ mri windows ]
   gem "web-console"
+  gem "katakata_irb"
+  gem "repl_type_completor"
 end
