@@ -1,4 +1,4 @@
-<%# When @ssr is present (e.g. /explore, /blog), the server-rendered markup is %>
+<%# When @ssr is present (e.g. /blog), the server-rendered markup is %>
 <%# placed inside #app and the client hydrates it. Otherwise #app is empty and %>
 <%# the client renders from scratch (plain CSR). %>
 <% content_for(:title) { @page_title } if @page_title %>
