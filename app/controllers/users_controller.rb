@@ -8,6 +8,7 @@ class UsersController < ApplicationController
       id: user.id,
       username: user.username,
       display_name: user.display_name,
+      birthday: user.birthday&.iso8601,
       has_avatar: user.avatar.present?
     }
   rescue ActiveRecord::RecordNotFound
@@ -34,6 +35,10 @@ class UsersController < ApplicationController
       current_user.display_name = params[:display_name]
     end
 
+    if params.key?(:birthday)
+      current_user.birthday = params[:birthday].presence
+    end
+
     if params[:avatar]
       # Validate file type (only allow actual image formats)
       allowed_types = %w[image/jpeg image/png image/gif image/webp]
@@ -54,6 +59,7 @@ class UsersController < ApplicationController
         id: current_user.id,
         username: current_user.username,
         display_name: current_user.display_name,
+        birthday: current_user.birthday&.iso8601,
         avatar_updated: params[:avatar].present?
       }
     else

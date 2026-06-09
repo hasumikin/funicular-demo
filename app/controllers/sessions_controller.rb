@@ -10,6 +10,7 @@ class SessionsController < ApplicationController
         id: user.id,
         username: user.username,
         display_name: user.display_name,
+        birthday: user.birthday&.iso8601,
         has_avatar: user.avatar.present?
       }
     else
@@ -23,6 +24,7 @@ class SessionsController < ApplicationController
         id: current_user.id,
         username: current_user.username,
         display_name: current_user.display_name,
+        birthday: current_user.birthday&.iso8601,
         has_avatar: current_user.avatar.present?
       }
     else

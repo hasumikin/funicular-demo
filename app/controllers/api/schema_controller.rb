@@ -10,6 +10,7 @@ class Api::SchemaController < ApplicationController
         "id" => { type: "integer", readonly: true },
         "username" => { type: "string", readonly: true },
         "display_name" => { type: "string", readonly: false },
+        "birthday" => { type: "string", readonly: false },
         "has_avatar" => { type: "boolean", readonly: true },
         "avatar" => {
           type: "binary",
