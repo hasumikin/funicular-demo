@@ -31,7 +31,9 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
     states = @component.instance_variable_get("@suspense_states")
     assert_equal :resolved, states[:current_user]
     assert_text "Birthday"
+    assert_text "Image changes are saved immediately."
     assert_selector "form"
+    assert_selector "#avatar-input"
   end
 
   def test_calendar_button_opens_date_picker

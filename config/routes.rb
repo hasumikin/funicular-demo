@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   resources :users, only: [:show, :update] do
     member do
       get :avatar
+      patch :avatar, action: :update_avatar
     end
   end
 

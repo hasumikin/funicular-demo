@@ -11,12 +11,7 @@ class Api::SchemaController < ApplicationController
         "username" => { type: "string", readonly: true },
         "display_name" => { type: "string", readonly: false },
         "birthday" => { type: "string", readonly: false },
-        "has_avatar" => { type: "boolean", readonly: true },
-        "avatar" => {
-          type: "binary",
-          readonly: true,
-          upload_endpoint: "/users/:id/avatar"
-        }
+        "has_avatar" => { type: "boolean", readonly: true }
       },
       endpoints: {
         "find" => { method: "GET", path: "/users/:id" },

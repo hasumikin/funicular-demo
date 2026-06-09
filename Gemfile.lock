@@ -4,6 +4,11 @@ PATH
     funicular-datepicker (0.1.0)
 
 PATH
+  remote: ../funicular-image-uploader
+  specs:
+    funicular-image-uploader (0.1.0)
+
+PATH
   remote: ../funicular
   specs:
     funicular (0.2.0)
@@ -256,6 +261,7 @@ DEPENDENCIES
   debug
   funicular!
   funicular-datepicker!
+  funicular-image-uploader!
   katakata_irb
   propshaft
   puma (>= 5.0)

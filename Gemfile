@@ -21,6 +21,7 @@ gem "funicular", path: "~/work/funicular"
 
 group :funicular do
   gem "funicular-datepicker", path: "~/work/funicular-datepicker"
+  gem "funicular-image-uploader", path: "~/work/funicular-image-uploader"
 end
 
 group :development do

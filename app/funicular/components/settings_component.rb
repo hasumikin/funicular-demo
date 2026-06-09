@@ -34,7 +34,11 @@ class SettingsComponent < Funicular::Component
               error: "bg-red-100 border-red-400 text-red-700"
             }
     form "space-y-6"
+    section "space-y-3 pb-6 border-b border-gray-200"
+    profile_section "space-y-6"
     label "block text-sm font-medium text-gray-700 mb-2"
+    section_title "text-lg font-semibold text-gray-800"
+    section_hint "text-sm text-gray-500"
     input "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
     input_disabled "w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
     avatar_container "mb-2"
@@ -55,34 +59,14 @@ class SettingsComponent < Funicular::Component
       errors: {},
       message: nil,
       is_error: false,
-      avatar_preview: nil,
       saving: false,
       avatar_cache_buster: Time.now.to_i
     }
   end
 
-  def handle_avatar_change(event)
-    Funicular::FileUpload.select_file_with_preview('avatar-input') do |file, preview_url|
-      if file && preview_url
-        @selected_avatar_file = file
-        patch(avatar_preview: preview_url)
-      else
-        @selected_avatar_file = nil
-        patch(avatar_preview: nil)
-      end
-    end
-  end
-
   def handle_save(data)
     patch(saving: true, message: nil, is_error: false, errors: {})
-
-    if @selected_avatar_file
-      # If avatar file exists, use FormData to upload both display_name and avatar
-      save_with_formdata(data[:display_name], data[:birthday])
-    else
-      # If no avatar file, use Model layer to update profile fields
-      save_with_model(data[:display_name], data[:birthday])
-    end
+    save_with_model(data[:display_name], data[:birthday])
   end
 
   def save_with_model(display_name, birthday)
@@ -121,50 +105,6 @@ class SettingsComponent < Funicular::Component
     end
   end
 
-  def save_with_formdata(display_name, birthday)
-    url = "/users/#{current_user.id}"
-    fields = { display_name: display_name, birthday: birthday }
-
-    Funicular::FileUpload.upload_with_formdata(
-      url,
-      fields: fields,
-      file_field: 'avatar',
-      file: @selected_avatar_file
-    ) do |result|
-      @selected_avatar_file = nil
-      handle_formdata_response(result)
-    end
-  end
-
-  def handle_formdata_response(result)
-    if result.nil?
-      patch(saving: false, message: "Failed to parse response", is_error: true)
-    elsif result["error"] || result["errors"]
-      error_msg = result["error"] || result["errors"].join(", ")
-      patch(saving: false, message: error_msg, is_error: true, avatar_preview: nil)
-    else
-      # Update suspense data directly
-      current_user.instance_variable_set("@display_name", result["display_name"])
-      current_user.instance_variable_set("@birthday", result["birthday"])
-      if result["avatar_updated"]
-        current_user.instance_variable_set("@has_avatar", true)
-      end
-
-      patch(
-        saving: false,
-        message: "Settings saved successfully!",
-        is_error: false,
-        user: {
-          username: current_user.username,
-          display_name: result["display_name"],
-          birthday: result["birthday"]
-        },
-        avatar_preview: nil,
-        avatar_cache_buster: Time.now.to_i
-      )
-    end
-  end
-
   def render
     div(class: s.container) do
       div(class: s.card) do
@@ -197,7 +137,40 @@ class SettingsComponent < Funicular::Component
               end
             }
           ) do
+            div(class: s.section) do
+              div do
+                h2(class: s.section_title) { "Avatar" }
+                p(class: s.section_hint) { "Image changes are saved immediately." }
+              end
+              component(
+                Funicular::Plugins::ImageUploader::Component,
+                src: current_user.has_avatar ? "/users/#{current_user.id}/avatar?t=#{state.avatar_cache_buster}" : nil,
+                upload_url: "/users/#{current_user.id}/avatar",
+                input_id: "avatar-input",
+                file_field: "avatar",
+                auto_upload: true,
+                preview_container_class: s.avatar_container,
+                image_class: s.avatar,
+                input_class: s.input,
+                on_upload: ->(result) {
+                  current_user.instance_variable_set("@has_avatar", true)
+                  patch(
+                    message: "Avatar updated successfully!",
+                    is_error: false,
+                    avatar_cache_buster: Time.now.to_i
+                  )
+                },
+                on_error: ->(message, result) {
+                  patch(message: message, is_error: true)
+                }
+              )
+            end
+
             form_for(:user, on_submit: :handle_save, class: s.form) do |f|
+              div do
+                h2(class: s.section_title) { "Profile" }
+              end
+
               div do
                 f.label :username
                 f.text_field :username, disabled: true, class: s.input_disabled
@@ -218,20 +191,6 @@ class SettingsComponent < Funicular::Component
                     patch(user: state.user.merge(birthday: value))
                   }
                 )
-              end
-
-              div do
-                label(class: s.label) { "Avatar" }
-                if state.avatar_preview
-                  div(class: s.avatar_container) do
-                    img(src: state.avatar_preview, class: s.avatar)
-                  end
-                elsif current_user.has_avatar
-                  div(class: s.avatar_container) do
-                    img(src: "/users/#{current_user.id}/avatar?t=#{state.avatar_cache_buster}", class: s.avatar)
-                  end
-                end
-                f.file_field :avatar, id: "avatar-input", accept: "image/*", onchange: :handle_avatar_change, class: s.input
               end
 
               f.submit(
