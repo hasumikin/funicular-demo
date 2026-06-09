@@ -19,6 +19,10 @@ gem "tailwindcss-rails"
 gem "funicular", path: "~/work/funicular"
 #gem "funicular"
 
+group :funicular do
+  gem "funicular-datepicker", path: "~/work/funicular-datepicker"
+end
+
 group :development do
   gem "debug", platforms: %i[ mri windows ]
   gem "web-console"

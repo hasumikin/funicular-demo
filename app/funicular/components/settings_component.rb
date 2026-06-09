@@ -16,11 +16,11 @@ class SettingsComponent < Funicular::Component
       patch(
         user: {
           username: user.username,
-          display_name: user.display_name
+          display_name: user.display_name,
+          birthday: user.birthday
         }
       )
-    },
-    min_delay: 500  # Show loading spinner for at least 500ms
+    }
 
   styles do
     container "min-h-screen bg-gray-100 py-8"
@@ -51,7 +51,7 @@ class SettingsComponent < Funicular::Component
 
   def initialize_state
     {
-      user: { username: "", display_name: "" },
+      user: { username: "", display_name: "", birthday: "" },
       errors: {},
       message: nil,
       is_error: false,
@@ -78,22 +78,24 @@ class SettingsComponent < Funicular::Component
 
     if @selected_avatar_file
       # If avatar file exists, use FormData to upload both display_name and avatar
-      save_with_formdata(data[:display_name])
+      save_with_formdata(data[:display_name], data[:birthday])
     else
-      # If no avatar file, use Model layer to update display_name only
-      save_with_model(data[:display_name])
+      # If no avatar file, use Model layer to update profile fields
+      save_with_model(data[:display_name], data[:birthday])
     end
   end
 
-  def save_with_model(display_name)
+  def save_with_model(display_name, birthday)
     # Preserve has_avatar state
     had_avatar = current_user.has_avatar
 
     current_user.display_name = display_name
+    current_user.birthday = birthday
     current_user.update do |success, result|
       if success
         # Update suspense data directly
         current_user.instance_variable_set("@display_name", result["display_name"])
+        current_user.instance_variable_set("@birthday", result["birthday"])
         # Preserve has_avatar if not included in response
         if result["has_avatar"].nil? && had_avatar
           current_user.instance_variable_set("@has_avatar", true)
@@ -105,7 +107,8 @@ class SettingsComponent < Funicular::Component
           is_error: false,
           user: {
             username: current_user.username,
-            display_name: current_user.display_name
+            display_name: current_user.display_name,
+            birthday: current_user.birthday
           }
         )
       elsif result.respond_to?(:messages)
@@ -118,9 +121,9 @@ class SettingsComponent < Funicular::Component
     end
   end
 
-  def save_with_formdata(display_name)
+  def save_with_formdata(display_name, birthday)
     url = "/users/#{current_user.id}"
-    fields = { display_name: display_name }
+    fields = { display_name: display_name, birthday: birthday }
 
     Funicular::FileUpload.upload_with_formdata(
       url,
@@ -142,6 +145,7 @@ class SettingsComponent < Funicular::Component
     else
       # Update suspense data directly
       current_user.instance_variable_set("@display_name", result["display_name"])
+      current_user.instance_variable_set("@birthday", result["birthday"])
       if result["avatar_updated"]
         current_user.instance_variable_set("@has_avatar", true)
       end
@@ -152,7 +156,8 @@ class SettingsComponent < Funicular::Component
         is_error: false,
         user: {
           username: current_user.username,
-          display_name: result["display_name"]
+          display_name: result["display_name"],
+          birthday: result["birthday"]
         },
         avatar_preview: nil,
         avatar_cache_buster: Time.now.to_i
@@ -179,47 +184,61 @@ class SettingsComponent < Funicular::Component
           end
         end
 
-        suspense(
-          fallback: -> {
-            div(class: s.loading_container) do
-              div(class: s.loading_spinner)
-            end
-          },
-          error: ->(e) {
-            div(class: s.message(:error)) do
-              span { "Failed to load user data" }
-            end
-          }
-        ) do
-          form_for(:user, on_submit: :handle_save, class: s.form) do |f|
-            div do
-              f.label :username
-              f.text_field :username, disabled: true, class: s.input_disabled
-            end
-
-            div do
-              f.label :display_name, "Display Name"
-              f.text_field :display_name, class: s.input
-            end
-
-            div do
-              label(class: s.label) { "Avatar" }
-              if state.avatar_preview
-                div(class: s.avatar_container) do
-                  img(src: state.avatar_preview, class: s.avatar)
-                end
-              elsif current_user.has_avatar
-                div(class: s.avatar_container) do
-                  img(src: "/users/#{current_user.id}/avatar?t=#{state.avatar_cache_buster}", class: s.avatar)
-                end
+        div do
+          suspense(
+            fallback: -> {
+              div(class: s.loading_container) do
+                div(class: s.loading_spinner)
               end
-              f.file_field :avatar, id: "avatar-input", accept: "image/*", onchange: :handle_avatar_change, class: s.input
-            end
+            },
+            error: ->(e) {
+              div(class: s.message(:error)) do
+                span { "Failed to load user data" }
+              end
+            }
+          ) do
+            form_for(:user, on_submit: :handle_save, class: s.form) do |f|
+              div do
+                f.label :username
+                f.text_field :username, disabled: true, class: s.input_disabled
+              end
 
-            f.submit(
-              state.saving ? "Saving..." : "Save Changes",
-              class: s.submit_button(state.saving ? :saving : :normal)
-            )
+              div do
+                f.label :display_name, "Display Name"
+                f.text_field :display_name, class: s.input
+              end
+
+              div do
+                f.label :birthday, "Birthday"
+                component(
+                  Funicular::Plugins::DatePicker::Component,
+                  value: state.user[:birthday] || state.user["birthday"],
+                  input_class: s.input,
+                  on_change: ->(value) {
+                    patch(user: state.user.merge(birthday: value))
+                  }
+                )
+              end
+
+              div do
+                label(class: s.label) { "Avatar" }
+                if state.avatar_preview
+                  div(class: s.avatar_container) do
+                    img(src: state.avatar_preview, class: s.avatar)
+                  end
+                elsif current_user.has_avatar
+                  div(class: s.avatar_container) do
+                    img(src: "/users/#{current_user.id}/avatar?t=#{state.avatar_cache_buster}", class: s.avatar)
+                  end
+                end
+                f.file_field :avatar, id: "avatar-input", accept: "image/*", onchange: :handle_avatar_change, class: s.input
+              end
+
+              f.submit(
+                state.saving ? "Saving..." : "Save Changes",
+                class: s.submit_button(state.saving ? :saving : :normal)
+              )
+            end
           end
         end
       end
