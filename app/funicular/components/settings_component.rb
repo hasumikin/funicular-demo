@@ -40,6 +40,7 @@ class SettingsComponent < Funicular::Component
     section_title "text-lg font-semibold text-gray-800"
     section_hint "text-sm text-gray-500"
     input "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    file_input "w-full text-sm text-gray-700 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-600 file:text-white file:font-semibold file:cursor-pointer hover:file:bg-blue-700"
     input_disabled "w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
     avatar_container "mb-2"
     avatar "w-24 h-24 rounded-full object-cover"
@@ -151,7 +152,7 @@ class SettingsComponent < Funicular::Component
                 auto_upload: true,
                 preview_container_class: s.avatar_container,
                 image_class: s.avatar,
-                input_class: s.input,
+                input_class: s.file_input,
                 on_upload: ->(result) {
                   current_user.instance_variable_set("@has_avatar", true)
                   patch(

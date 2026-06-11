@@ -20,8 +20,8 @@ gem "funicular", path: "~/work/funicular"
 #gem "funicular"
 
 group :funicular do
-  gem "funicular-datepicker", path: "~/work/funicular-datepicker"
-  gem "funicular-image-uploader", path: "~/work/funicular-image-uploader"
+  gem "funicular-datepicker"
+  gem "funicular-image-uploader"
 end
 
 group :development do

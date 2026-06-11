@@ -1,14 +1,4 @@
 PATH
-  remote: ../funicular-datepicker
-  specs:
-    funicular-datepicker (0.1.0)
-
-PATH
-  remote: ../funicular-image-uploader
-  specs:
-    funicular-image-uploader (0.1.0)
-
-PATH
   remote: ../funicular
   specs:
     funicular (0.2.0)
@@ -108,6 +98,8 @@ GEM
     drb (2.2.3)
     erb (6.0.4)
     erubi (1.13.1)
+    funicular-datepicker (0.1.1)
+    funicular-image-uploader (0.1.1)
     globalid (1.3.0)
       activesupport (>= 6.1)
     i18n (1.14.8)
@@ -263,8 +255,8 @@ DEPENDENCIES
   bootsnap
   debug
   funicular!
-  funicular-datepicker!
-  funicular-image-uploader!
+  funicular-datepicker
+  funicular-image-uploader
   katakata_irb
   propshaft
   puma (>= 5.0)

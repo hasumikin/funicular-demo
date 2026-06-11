@@ -34,6 +34,7 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
     assert_text "Image changes are saved immediately."
     assert_selector "form"
     assert_selector "#avatar-input"
+    assert_selector "#avatar-input.cursor-pointer"
   end
 
   def test_calendar_button_opens_date_picker
