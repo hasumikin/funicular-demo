@@ -2,7 +2,7 @@ class BlogPostComponent < Funicular::Component
   styles do
     container "min-h-screen bg-gray-50 py-10"
     inner "max-w-2xl mx-auto px-4"
-    back "mb-6 text-sm"
+    back "mb-6 text-sm flex gap-4"
     back_link "text-blue-600 hover:underline"
     article_box "bg-white rounded-lg shadow p-6"
     title "text-3xl font-bold text-gray-800"
@@ -69,6 +69,9 @@ class BlogPostComponent < Funicular::Component
         div(class: s.back) do
           link_to "/blog", navigate: true, class: s.back_link do
             span { "All posts" }
+          end
+          link_to "/chat", navigate: true, class: s.back_link do
+            span { "Back to chat" }
           end
         end
 

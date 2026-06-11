@@ -2,6 +2,8 @@ class BlogIndexComponent < Funicular::Component
   styles do
     container "min-h-screen bg-gray-50 py-10"
     inner "max-w-2xl mx-auto px-4"
+    nav "mb-6 text-sm"
+    nav_link "text-blue-600 hover:underline"
     title "text-3xl font-bold text-gray-800 mb-2"
     lead "text-gray-600 mb-8"
     list "space-y-4"
@@ -29,6 +31,12 @@ class BlogIndexComponent < Funicular::Component
   def render
     div(class: s.container) do
       div(class: s.inner) do
+        div(class: s.nav) do
+          link_to "/chat", navigate: true, class: s.nav_link do
+            span { "Back to chat" }
+          end
+        end
+
         h1(class: s.title) { "Funicular Blog" }
         p(class: s.lead) do
           "Notes on building a chat app with Ruby on the front end. "\
