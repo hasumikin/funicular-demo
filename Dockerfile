@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM ruby:4.0-slim AS builder
+FROM ruby:4.0.5-slim AS builder
 
 # Install build dependencies
 RUN apt-get update -qq && \
