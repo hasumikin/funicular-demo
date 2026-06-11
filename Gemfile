@@ -15,9 +15,7 @@ gem "bootsnap", require: false
 gem "tailwindcss-rails"
 
 # Funicular - From GitHub
-#gem "funicular", git: "https://github.com/hasumikin/funicular"
-gem "funicular", path: "~/work/funicular"
-#gem "funicular"
+gem "funicular"
 
 group :funicular do
   gem "funicular-datepicker"
