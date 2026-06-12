@@ -31,7 +31,7 @@ class BlogPostComponent < Funicular::Component
   end
 
   def initialize_state
-    { post: nil, comments: [], current_user: nil, comment: { body: "" }, errors: {}, interactive: false }
+    { post: nil, comments: [], current_user: nil, comment: { body: "" }, errors: {}, interactive: false, submitting: false }
   end
 
   def component_mounted
@@ -57,18 +57,32 @@ class BlogPostComponent < Funicular::Component
     body = textarea ? textarea[:value].to_s.strip : state.comment[:body].to_s.strip
     return if body.empty?
 
+    patch(submitting: true, errors: {})
+
     Comment.create({ post_id: state.post["id"], body: body }) do |comment, error|
       if error
-        patch(errors: { body: error })
+        patch(errors: { body: error }, submitting: false)
       else
         form = event[:target]
         form.reset if form
         textarea[:value] = "" if textarea
 
+        reload_post_comments
+      end
+    end
+  end
+
+  def reload_post_comments
+    Post.find(state.post["id"]) do |post, error|
+      if error
+        patch(errors: { body: error }, submitting: false)
+      else
         patch(
-          comments: state.comments + [comment_to_h(comment)],
+          post: post_to_h(post),
+          comments: post.comments || [],
           comment: { body: "" },
-          errors: {}
+          errors: {},
+          submitting: false
         )
       end
     end
@@ -120,10 +134,15 @@ class BlogPostComponent < Funicular::Component
                       ref: :comment_body,
                       class: s.textarea,
                       rows: 3,
-                      placeholder: "Share your thoughts..."
+                      placeholder: "Share your thoughts...",
+                      disabled: state.submitting
                     )
-                    button(type: "submit", class: s.submit) do
-                      span { "Post comment" }
+                    button(
+                      type: "submit",
+                      class: state.submitting ? s.submit_disabled : s.submit,
+                      disabled: state.submitting
+                    ) do
+                      span { state.submitting ? "Posting..." : "Post comment" }
                     end
                   end
                 else
