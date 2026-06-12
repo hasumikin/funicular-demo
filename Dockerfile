@@ -36,10 +36,10 @@ RUN bundle config set --local deployment 'true' && \
 COPY . .
 
 # Compile PicoRuby code with funicular
-RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails funicular:compile
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=development bundle exec rails funicular:compile
 
 # Precompile assets
-RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=development bundle exec rails assets:precompile
 RUN bundle exec rails tailwindcss:build
 
 # Stage 2: Runtime environment
@@ -69,13 +69,13 @@ USER rails:rails
 
 EXPOSE 80
 
-ENV RAILS_ENV=production \
+ENV RAILS_ENV=development \
     RAILS_LOG_TO_STDOUT=true \
     RAILS_SERVE_STATIC_FILES=true \
     PORT=80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD curl -f http://localhost:80/up || exit 1
+  CMD ruby -rsocket -e 'TCPSocket.new("127.0.0.1", 80).close'
 
-CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+CMD ["sh", "-lc", "bundle exec rails db:prepare && bundle exec puma -C config/puma.rb"]

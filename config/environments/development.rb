@@ -40,8 +40,16 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Allow the demo deployment host when running the container in development.
+  config.hosts << "rails-chat.hasumikin.com"
+  config.action_cable.allowed_request_origins = [ "https://rails-chat.hasumikin.com" ]
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
+
+  if ENV["RAILS_LOG_TO_STDOUT"].present?
+    config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
+  end
 
   # Raise an error on page load if there are pending migrations.
   config.active_record.migration_error = :page_load

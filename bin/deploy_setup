@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "Rails Chat Kamal Deployment Setup"
 echo "=================================="
@@ -9,11 +9,16 @@ command -v aws >/dev/null 2>&1 || { echo "AWS CLI is required but not installed.
 command -v kamal >/dev/null 2>&1 || { echo "Kamal is required but not installed. Run: gem install kamal" >&2; exit 1; }
 
 # Prompt for parameters
-read -p "Enter AWS Region (e.g., ap-northeast-1): " AWS_REGION
+DEFAULT_AWS_REGION="ap-northeast-1"
+read -p "Enter AWS Region [$DEFAULT_AWS_REGION]: " AWS_REGION
+AWS_REGION=${AWS_REGION:-$DEFAULT_AWS_REGION}
 read -p "Enter EC2 Key Pair Name: " KEY_PAIR_NAME
 read -p "Enter Route53 Hosted Zone ID: " HOSTED_ZONE_ID
 read -p "Enter VPC ID (default VPC): " VPC_ID
 read -p "Enter Subnet ID (public subnet): " SUBNET_ID
+DEFAULT_SSH_KEY="~/.ssh/${KEY_PAIR_NAME}.pem"
+read -p "Enter SSH private key path [$DEFAULT_SSH_KEY]: " SSH_KEY_PATH
+SSH_KEY_PATH=${SSH_KEY_PATH:-$DEFAULT_SSH_KEY}
 
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
@@ -25,6 +30,7 @@ echo "  Key Pair: $KEY_PAIR_NAME"
 echo "  Hosted Zone ID: $HOSTED_ZONE_ID"
 echo "  VPC ID: $VPC_ID"
 echo "  Subnet ID: $SUBNET_ID"
+echo "  SSH Key: $SSH_KEY_PATH"
 echo ""
 
 read -p "Proceed with CloudFormation stack creation? (y/n) " -n 1 -r
@@ -66,28 +72,43 @@ ECR_URI=$(aws cloudformation describe-stacks \
   --output text \
   --region $AWS_REGION)
 
+DNS_NAME=$(aws cloudformation describe-stacks \
+  --stack-name $STACK_NAME \
+  --query "Stacks[0].Outputs[?OutputKey=='DNSName'].OutputValue" \
+  --output text \
+  --region $AWS_REGION)
+
+ECR_REGISTRY=${ECR_URI%/*}
+ECR_REPOSITORY=${ECR_URI##*/}
+
 echo ""
 echo "Stack created successfully!"
 echo "  EC2 Public IP: $EC2_PUBLIC_IP"
 echo "  ECR Repository: $ECR_URI"
+echo "  DNS Name: $DNS_NAME"
 echo ""
 
 # Update deploy.yml
+if [ ! -f config/deploy.yml ]; then
+  echo "Creating config/deploy.yml from config/deploy.yml.example..."
+  cp config/deploy.yml.example config/deploy.yml
+fi
+
 echo "Updating config/deploy.yml..."
-sed -i.bak "s/- 192.168.0.1/- $EC2_PUBLIC_IP/" config/deploy.yml
-sed -i.bak "s|server: localhost:5555|server: $ECR_URI|" config/deploy.yml
-sed -i.bak "s|image: rails_chat|image: $ECR_URI:latest|" config/deploy.yml
+sed -i.bak "s/- YOUR_SERVER_IP/- $EC2_PUBLIC_IP/" config/deploy.yml
+sed -i.bak "s|host: your-domain.com|host: $DNS_NAME|" config/deploy.yml
+sed -i.bak "s|server: YOUR_AWS_ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com|server: $ECR_REGISTRY|" config/deploy.yml
+sed -i.bak "s|image: rails-chat|image: $ECR_REPOSITORY|" config/deploy.yml
+sed -i.bak "s|~/.ssh/YOUR_KEY.pem|$SSH_KEY_PATH|" config/deploy.yml
 
 # Create .kamal/secrets
 echo "Creating .kamal/secrets..."
+mkdir -p .kamal
 cat > .kamal/secrets <<EOF
 #!/bin/bash
 
 # AWS ECR login password
 export KAMAL_REGISTRY_PASSWORD=\$(aws ecr get-login-password --region $AWS_REGION)
-
-# Rails master key
-export RAILS_MASTER_KEY=\$(cat config/master.key)
 EOF
 
 chmod +x .kamal/secrets
@@ -102,8 +123,7 @@ fi
 echo ""
 echo "Setup complete! Next steps:"
 echo "1. Verify config/deploy.yml settings"
-echo "2. Ensure config/master.key exists"
-echo "3. Wait for DNS propagation (~5-10 minutes)"
-echo "   Test with: dig rails-chat.hasumikin.com"
-echo "4. Run: kamal setup"
-echo "5. Run: kamal deploy"
+echo "2. Wait for DNS propagation (~5-10 minutes)"
+echo "   Test with: dig $DNS_NAME"
+echo "3. Run: kamal setup"
+echo "4. Run: kamal deploy"
