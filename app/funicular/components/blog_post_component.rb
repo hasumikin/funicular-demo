@@ -118,22 +118,31 @@ class BlogPostComponent < Funicular::Component
             if state.current_user
               div(class: s.form_box) do
                 div(class: s.form_title) { "Comment as #{state.current_user["display_name"]}" }
-                form(onsubmit: ->(event) { handle_submit(event) }) do
-                  can_submit = state.interactive && !state.comment[:body].to_s.strip.empty?
-                  textarea(
-                    ref: :comment_body,
-                    value: state.comment[:body],
-                    oninput: ->(event) { handle_comment_input(event) },
-                    class: s.textarea,
-                    rows: 3,
-                    placeholder: "Share your thoughts..."
-                  )
-                  button(
-                    type: "submit",
-                    class: can_submit ? s.submit : s.submit_disabled,
-                    disabled: !can_submit
-                  ) do
-                    span { "Post comment" }
+                if state.interactive
+                  form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
+                    textarea(
+                      ref: :comment_body,
+                      value: state.comment[:body],
+                      oninput: ->(event) { handle_comment_input(event) },
+                      class: s.textarea,
+                      rows: 3,
+                      placeholder: "Share your thoughts..."
+                    )
+                    button(type: "submit", class: s.submit) do
+                      span { "Post comment" }
+                    end
+                  end
+                else
+                  div(key: :comment_form_pending) do
+                    textarea(
+                      class: s.textarea,
+                      rows: 3,
+                      placeholder: "Share your thoughts...",
+                      disabled: true
+                    )
+                    button(type: "button", class: s.submit_disabled, disabled: true) do
+                      span { "Post comment" }
+                    end
                   end
                 end
               end
