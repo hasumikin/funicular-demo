@@ -46,14 +46,23 @@ class BlogPostComponent < Funicular::Component
     end
   end
 
-  def handle_submit(data)
-    body = data[:body].to_s.strip
+  def handle_comment_input(event)
+    patch(comment: { body: event.target[:value] })
+  end
+
+  def handle_submit(event)
+    event.preventDefault
+
+    body = state.comment[:body].to_s.strip
     return if body.empty?
 
     Comment.create({ post_id: state.post["id"], body: body }) do |comment, error|
       if error
         patch(errors: { body: error })
       else
+        form = event[:target]
+        form.reset if form
+
         patch(
           comments: state.comments + [comment_to_h(comment)],
           comment: { body: "" },
@@ -103,9 +112,17 @@ class BlogPostComponent < Funicular::Component
             if state.current_user
               div(class: s.form_box) do
                 div(class: s.form_title) { "Comment as #{state.current_user["display_name"]}" }
-                form_for(:comment, on_submit: :handle_submit) do |f|
-                  f.textarea :body, class: s.textarea, rows: 3, placeholder: "Share your thoughts..."
-                  f.submit "Post comment", class: s.submit
+                form(onsubmit: ->(event) { handle_submit(event) }) do
+                  textarea(
+                    value: state.comment[:body],
+                    oninput: ->(event) { handle_comment_input(event) },
+                    class: s.textarea,
+                    rows: 3,
+                    placeholder: "Share your thoughts..."
+                  )
+                  button(type: "submit", class: s.submit) do
+                    span { "Post comment" }
+                  end
                 end
               end
             else
