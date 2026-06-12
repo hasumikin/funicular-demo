@@ -49,6 +49,7 @@ FROM ruby:4.0-slim
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
     libsqlite3-0 \
+    nodejs \
     curl && \
     rm -rf /var/lib/apt/lists/*
 
@@ -62,7 +63,7 @@ COPY --from=builder /usr/local/bundle /usr/local/bundle
 COPY --from=builder /rails /rails
 
 # Create storage and log directories
-RUN mkdir -p /rails/storage /rails/log && \
+RUN mkdir -p /rails/storage /rails/log /home/rails && \
     chown -R rails:rails /rails
 
 USER rails:rails

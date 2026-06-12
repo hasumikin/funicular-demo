@@ -17,6 +17,7 @@ SQLite and Active Storage files live under `/rails/storage`, so they survive con
 The container runs `bin/rails db:prepare` before Puma starts, so the development SQLite database is created automatically on first boot.
 Docker health checks only verify that Puma is accepting TCP connections on port 80. Rails errors are inspected with `kamal logs`.
 Development host authorization allows the public demo host and Docker container hostnames used by Kamal proxy checks.
+Node.js is installed in the runtime image because Funicular may recompile Ruby browser code on request in development mode.
 
 ## Prerequisites
 
