@@ -42,6 +42,7 @@ Rails.application.configure do
 
   # Allow the demo deployment host when running the container in development.
   config.hosts << "rails-chat.hasumikin.com"
+  config.hosts << /^[a-f0-9]{12}(:\d+)?$/
   config.action_cable.allowed_request_origins = [ "https://rails-chat.hasumikin.com" ]
 
   # Print deprecation notices to the Rails logger.
