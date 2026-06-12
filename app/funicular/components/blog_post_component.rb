@@ -19,6 +19,7 @@ class BlogPostComponent < Funicular::Component
     form_title "text-sm font-semibold text-gray-700 mb-2"
     textarea "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
     submit "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700"
+    submit_disabled "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold opacity-50 cursor-not-allowed"
     login_prompt "mt-6 text-sm text-gray-600"
     login_link "text-blue-600 hover:underline"
     missing "text-gray-500"
@@ -30,10 +31,13 @@ class BlogPostComponent < Funicular::Component
   end
 
   def initialize_state
-    { post: nil, comments: [], current_user: nil, comment: { body: "" }, errors: {} }
+    { post: nil, comments: [], current_user: nil, comment: { body: "" }, errors: {}, interactive: false }
   end
 
   def component_mounted
+    puts "BlogPostComponent mounted: comment form is ready"
+    patch(interactive: true)
+
     # When the server injected the post (SSR + hydration) we trust its state,
     # including who the viewer is. Only fetch on pure client-side navigation.
     return unless state.post.nil?
@@ -53,7 +57,8 @@ class BlogPostComponent < Funicular::Component
   def handle_submit(event)
     event.preventDefault
 
-    body = state.comment[:body].to_s.strip
+    textarea = @refs[:comment_body]
+    body = textarea ? textarea[:value].to_s.strip : state.comment[:body].to_s.strip
     return if body.empty?
 
     Comment.create({ post_id: state.post["id"], body: body }) do |comment, error|
@@ -62,6 +67,7 @@ class BlogPostComponent < Funicular::Component
       else
         form = event[:target]
         form.reset if form
+        textarea[:value] = "" if textarea
 
         patch(
           comments: state.comments + [comment_to_h(comment)],
@@ -113,14 +119,20 @@ class BlogPostComponent < Funicular::Component
               div(class: s.form_box) do
                 div(class: s.form_title) { "Comment as #{state.current_user["display_name"]}" }
                 form(onsubmit: ->(event) { handle_submit(event) }) do
+                  can_submit = state.interactive && !state.comment[:body].to_s.strip.empty?
                   textarea(
+                    ref: :comment_body,
                     value: state.comment[:body],
                     oninput: ->(event) { handle_comment_input(event) },
                     class: s.textarea,
                     rows: 3,
                     placeholder: "Share your thoughts..."
                   )
-                  button(type: "submit", class: s.submit) do
+                  button(
+                    type: "submit",
+                    class: can_submit ? s.submit : s.submit_disabled,
+                    disabled: !can_submit
+                  ) do
                     span { "Post comment" }
                   end
                 end
