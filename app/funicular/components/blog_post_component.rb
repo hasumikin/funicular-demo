@@ -50,10 +50,6 @@ class BlogPostComponent < Funicular::Component
     end
   end
 
-  def handle_comment_input(event)
-    patch(comment: { body: event.target[:value] })
-  end
-
   def handle_submit(event)
     event.preventDefault
 
@@ -122,8 +118,6 @@ class BlogPostComponent < Funicular::Component
                   form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
                     textarea(
                       ref: :comment_body,
-                      value: state.comment[:body],
-                      oninput: ->(event) { handle_comment_input(event) },
                       class: s.textarea,
                       rows: 3,
                       placeholder: "Share your thoughts..."
