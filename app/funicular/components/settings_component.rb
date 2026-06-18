@@ -67,7 +67,7 @@ class SettingsComponent < Funicular::Component
 
   def handle_save(data)
     patch(saving: true, message: nil, is_error: false, errors: {})
-    save_with_model(data[:display_name], data[:birthday])
+    save_with_model(data[:display_name], data[:birthday] || state.user[:birthday] || state.user["birthday"])
   end
 
   def save_with_model(display_name, birthday)
@@ -186,6 +186,7 @@ class SettingsComponent < Funicular::Component
                 f.label :birthday, "Birthday"
                 component(
                   Funicular::Plugins::DatePicker::Component,
+                  name: "birthday",
                   value: state.user[:birthday] || state.user["birthday"],
                   input_class: s.input,
                   on_change: ->(value) {

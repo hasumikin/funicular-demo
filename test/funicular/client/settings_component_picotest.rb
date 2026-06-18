@@ -33,6 +33,7 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
     assert_text "Birthday"
     assert_text "Image changes are saved immediately."
     assert_selector "form"
+    assert_selector "input[name='birthday']"
     assert_selector "#avatar-input"
     assert_selector "#avatar-input.cursor-pointer"
   end
@@ -43,6 +44,19 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
 
     click ".funicular-date-picker__button"
     assert_selector ".funicular-date-picker__panel"
+  end
+
+  def test_submit_sends_date_picker_birthday
+    User.__test_last_birthday = nil
+    component = mount SettingsComponent
+    drain 650
+
+    component.patch(user: component.state.user.merge(birthday: "1990-04-12"))
+    drain
+    component.handle_save(display_name: "Alice")
+    drain
+
+    assert_equal "1990-04-12", User.__test_last_birthday
   end
 end
 
@@ -55,5 +69,23 @@ class Session
       self.__test_current_user_called = true
       block.call(__test_current_user, nil)
     end
+  end
+end
+
+class User
+  class << self
+    attr_accessor :__test_last_birthday
+  end
+
+  def update(&block)
+    self.class.__test_last_birthday = birthday
+    block.call(
+      true,
+      {
+        "display_name" => display_name,
+        "birthday" => birthday,
+        "has_avatar" => has_avatar
+      }
+    )
   end
 end

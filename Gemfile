@@ -14,7 +14,7 @@ gem "bootsnap", require: false
 # Tailwind CSS
 gem "tailwindcss-rails"
 
-# Funicular - From GitHub
+# Funicular
 gem "funicular"
 
 group :funicular do
