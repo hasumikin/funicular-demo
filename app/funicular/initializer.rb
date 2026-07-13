@@ -21,7 +21,7 @@ Funicular.load_schemas({ User => "user", Session => "session", Channel => "chann
     router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel', constraints: { channel_id: /\d+/ })
     router.get('/chat', to: ChatComponent, as: 'chat')
     router.get('/settings', to: SettingsComponent, as: 'settings')
-    router.delete('/messages/:message_id', to: MessageComponent, as: 'message', constraints: { message_id: /\d+/ })
+    router.delete('/messages/:id', to: MessageComponent, as: 'message', constraints: { id: /\d+/ })
     router.set_default('/login')
   end
 end

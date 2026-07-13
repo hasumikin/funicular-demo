@@ -5411,14 +5411,14 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('loadSplitModule');
 }
 var ASM_CONSTS = {
-  2639388: ($0) => { globalThis.picorubyRefs[$0] = null; },  
- 2639428: ($0) => { globalThis.picorubyRefs[$0] = true; },  
- 2639468: ($0) => { globalThis.picorubyRefs[$0] = false; },  
- 2639509: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2639547: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
- 2639585: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
- 2639658: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
- 2639797: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
+  2652166: ($0) => { globalThis.picorubyRefs[$0] = null; },  
+ 2652206: ($0) => { globalThis.picorubyRefs[$0] = true; },  
+ 2652246: ($0) => { globalThis.picorubyRefs[$0] = false; },  
+ 2652287: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2652325: ($0, $1) => { globalThis.picorubyRefs[$0] = $1; },  
+ 2652363: ($0, $1, $2) => { const str = UTF8ToString($1, $2); globalThis.picorubyRefs[$0] = str; },  
+ 2652436: ($0, $1) => { const arr = globalThis.picorubyRefs[$0]; const elem = globalThis.picorubyRefs[$1]; arr.push(elem); delete globalThis.picorubyRefs[$1]; },  
+ 2652575: ($0, $1, $2) => { const obj = globalThis.picorubyRefs[$0]; const key = UTF8ToString($1); const val = globalThis.picorubyRefs[$2]; obj[key] = val; delete globalThis.picorubyRefs[$2]; }
 };
 function ble_dataview_length(ref_id) { try { const dv = globalThis.picorubyRefs[ref_id]; if (dv && dv.byteLength !== undefined) { return dv.byteLength; } return 0; } catch(e) { console.error('ble_dataview_length failed:', e); return 0; } }
 function ble_dataview_read(ref_id,out_buf,max_len) { try { const dv = globalThis.picorubyRefs[ref_id]; if (!dv) return 0; const len = Math.min(dv.byteLength, max_len); for (let i = 0; i < len; i++) { HEAPU8[out_buf + i] = dv.getUint8(i); } return len; } catch(e) { console.error('ble_dataview_read failed:', e); return 0; } }
@@ -5507,7 +5507,7 @@ function serial_capture_start(ref_id) { try { const port = globalThis.picorubyRe
 function serial_binary_capture_start(ref_id) { try { const port = globalThis.picorubyRefs[ref_id]; if (!port) return; if (!globalThis.picorubySerialBinCap) { const buffers = new WeakMap(); const active = new WeakSet(); const MAX_BYTES = 256 * 1024; globalThis.picorubySerialBinCap = { start(p) { buffers.set(p, { chunks: [], totalBytes: 0 }); active.add(p); }, isActive(p) { return active.has(p); }, append(p, value) { const buf = buffers.get(p); if (!buf) return; const copy = new Uint8Array(value); buf.chunks.push(copy); buf.totalBytes += copy.length; while (buf.totalBytes > MAX_BYTES && buf.chunks.length > 1) { const removed = buf.chunks.shift(); buf.totalBytes -= removed.length; } }, read(p, outPtr, maxBytes) { const buf = buffers.get(p); if (!buf || buf.totalBytes === 0) return 0; let written = 0; while (written < maxBytes && buf.chunks.length > 0) { const chunk = buf.chunks[0]; const needed = maxBytes - written; if (chunk.length <= needed) { HEAPU8.set(chunk, outPtr + written); written += chunk.length; buf.chunks.shift(); } else { HEAPU8.set(chunk.subarray(0, needed), outPtr + written); buf.chunks[0] = chunk.subarray(needed); written += needed; } } buf.totalBytes -= written; return written; }, stop(p) { active.delete(p); buffers.delete(p); }, }; } globalThis.picorubySerialBinCap.start(port); } catch (e) { console.error('serial_binary_capture_start failed:', e); } }
 function serial_binary_capture_read(ref_id,out_buf,max_bytes) { try { const port = globalThis.picorubyRefs[ref_id]; if (!port || !globalThis.picorubySerialBinCap) return 0; return globalThis.picorubySerialBinCap.read(port, out_buf, max_bytes); } catch (e) { console.error('serial_binary_capture_read failed:', e); return 0; } }
 function serial_binary_capture_stop(ref_id) { try { const port = globalThis.picorubyRefs[ref_id]; if (!port || !globalThis.picorubySerialBinCap) return; globalThis.picorubySerialBinCap.stop(port); } catch (e) { console.error('serial_binary_capture_stop failed:', e); } }
-function serial_capture_get(ref_id,stop) { try { const port = globalThis.picorubyRefs[ref_id]; if (!port || !globalThis.picorubySerialCapture) { return globalThis.picorubyRefs.push("") - 1; } const cap = globalThis.picorubySerialCapture; const out = stop ? cap.stop(port) : cap.peek(port); return globalThis.picorubyRefs.push(out) - 1; } catch (e) { console.error('serial_capture_get failed:', e); return globalThis.picorubyRefs.push("") - 1; } }
+function serial_capture_copy(ref_id,stop,out_buf,max_bytes) { try { const port = globalThis.picorubyRefs[ref_id]; if (!port || !globalThis.picorubySerialCapture) { if (max_bytes > 0) HEAPU8[out_buf] = 0; return 0; } const cap = globalThis.picorubySerialCapture; const out = stop ? cap.stop(port) : cap.peek(port); const bytes = new TextEncoder().encode(out); const n = Math.min(bytes.length, Math.max(0, max_bytes - 1)); if (n > 0) { HEAPU8.set(bytes.subarray(0, n), out_buf); } if (max_bytes > 0) { HEAPU8[out_buf + n] = 0; } return n; } catch (e) { console.error('serial_capture_copy failed:', e); if (max_bytes > 0) HEAPU8[out_buf] = 0; return 0; } }
 function ws_new(url) { try { const ws = new WebSocket(UTF8ToString(url)); const refId = globalThis.picorubyRefs.push(ws) - 1; return refId; } catch(e) { console.error('WebSocket creation failed:', e); return -1; } }
 function ws_send(ref_id,data) { try { const ws = globalThis.picorubyRefs[ref_id]; if (ws && ws.readyState === WebSocket.OPEN) { ws.send(UTF8ToString(data)); } } catch(e) { console.error('WebSocket send failed:', e); } }
 function ws_send_binary(ref_id,data,length) { try { const ws = globalThis.picorubyRefs[ref_id]; if (ws && ws.readyState === WebSocket.OPEN) { const buffer = new Uint8Array(HEAPU8.buffer, data, length); const copy = new Uint8Array(buffer); ws.send(copy.buffer); } } catch(e) { console.error('WebSocket send_binary failed:', e); } }
@@ -5545,6 +5545,8 @@ var _resume_binary_task = Module['_resume_binary_task'] = makeInvalidEarlyAccess
 var _call_ruby_callback_sync_generic = Module['_call_ruby_callback_sync_generic'] = makeInvalidEarlyAccess('_call_ruby_callback_sync_generic');
 var _mrb_tick_wasm = Module['_mrb_tick_wasm'] = makeInvalidEarlyAccess('_mrb_tick_wasm');
 var _mrb_run_step = Module['_mrb_run_step'] = makeInvalidEarlyAccess('_mrb_run_step');
+var _mrb_run_step_status = Module['_mrb_run_step_status'] = makeInvalidEarlyAccess('_mrb_run_step_status');
+var _mrb_gc_scheduler_pending_wasm = Module['_mrb_gc_scheduler_pending_wasm'] = makeInvalidEarlyAccess('_mrb_gc_scheduler_pending_wasm');
 var _picorb_init = Module['_picorb_init'] = makeInvalidEarlyAccess('_picorb_init');
 var _picorb_create_task = Module['_picorb_create_task'] = makeInvalidEarlyAccess('_picorb_create_task');
 var _picorb_create_task_with_filename = Module['_picorb_create_task_with_filename'] = makeInvalidEarlyAccess('_picorb_create_task_with_filename');
@@ -5591,6 +5593,8 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['call_ruby_callback_sync_generic'] != 'undefined', 'missing Wasm export: call_ruby_callback_sync_generic');
   assert(typeof wasmExports['mrb_tick_wasm'] != 'undefined', 'missing Wasm export: mrb_tick_wasm');
   assert(typeof wasmExports['mrb_run_step'] != 'undefined', 'missing Wasm export: mrb_run_step');
+  assert(typeof wasmExports['mrb_run_step_status'] != 'undefined', 'missing Wasm export: mrb_run_step_status');
+  assert(typeof wasmExports['mrb_gc_scheduler_pending_wasm'] != 'undefined', 'missing Wasm export: mrb_gc_scheduler_pending_wasm');
   assert(typeof wasmExports['picorb_init'] != 'undefined', 'missing Wasm export: picorb_init');
   assert(typeof wasmExports['picorb_create_task'] != 'undefined', 'missing Wasm export: picorb_create_task');
   assert(typeof wasmExports['picorb_create_task_with_filename'] != 'undefined', 'missing Wasm export: picorb_create_task_with_filename');
@@ -5633,6 +5637,8 @@ function assignWasmExports(wasmExports) {
   _call_ruby_callback_sync_generic = Module['_call_ruby_callback_sync_generic'] = createExportWrapper('call_ruby_callback_sync_generic', 3);
   _mrb_tick_wasm = Module['_mrb_tick_wasm'] = createExportWrapper('mrb_tick_wasm', 0);
   _mrb_run_step = Module['_mrb_run_step'] = createExportWrapper('mrb_run_step', 0);
+  _mrb_run_step_status = Module['_mrb_run_step_status'] = createExportWrapper('mrb_run_step_status', 0);
+  _mrb_gc_scheduler_pending_wasm = Module['_mrb_gc_scheduler_pending_wasm'] = createExportWrapper('mrb_gc_scheduler_pending_wasm', 0);
   _picorb_init = Module['_picorb_init'] = createExportWrapper('picorb_init', 0);
   _picorb_create_task = Module['_picorb_create_task'] = createExportWrapper('picorb_create_task', 1);
   _picorb_create_task_with_filename = Module['_picorb_create_task_with_filename'] = createExportWrapper('picorb_create_task_with_filename', 2);
@@ -5943,7 +5949,7 @@ var wasmImports = {
   /** @export */
   serial_binary_capture_stop,
   /** @export */
-  serial_capture_get,
+  serial_capture_copy,
   /** @export */
   serial_capture_start,
   /** @export */

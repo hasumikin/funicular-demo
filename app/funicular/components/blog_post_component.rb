@@ -1,28 +1,28 @@
 class BlogPostComponent < Funicular::Component
-  styles do
-    container "min-h-screen bg-gray-50 py-10"
-    inner "max-w-2xl mx-auto px-4"
-    back "mb-6 text-sm flex gap-4"
-    back_link "text-blue-600 hover:underline"
-    article_box "bg-white rounded-lg shadow p-6"
-    title "text-3xl font-bold text-gray-800"
-    meta "text-gray-400 text-sm mt-2 mb-6"
-    body "text-gray-800 leading-relaxed whitespace-pre-line"
-    comments_section "mt-10"
-    comments_title "text-xl font-semibold text-gray-800 mb-4"
-    comments_list "space-y-3"
-    comment "bg-white rounded-lg shadow-sm p-4"
-    comment_meta "text-gray-400 text-xs mb-1"
-    comment_body "text-gray-700 text-sm"
-    no_comments "text-gray-500 text-sm"
-    form_box "mt-6 bg-white rounded-lg shadow p-4"
-    form_title "text-sm font-semibold text-gray-700 mb-2"
-    textarea "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    submit "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700"
-    submit_disabled "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold opacity-50 cursor-not-allowed"
-    login_prompt "mt-6 text-sm text-gray-600"
-    login_link "text-blue-600 hover:underline"
-    missing "text-gray-500"
+  styles do |css|
+    css.define :container, "min-h-screen bg-gray-50 py-10"
+    css.define :inner, "max-w-2xl mx-auto px-4"
+    css.define :back, "mb-6 text-sm flex gap-4"
+    css.define :back_link, "text-blue-600 hover:underline"
+    css.define :article_box, "bg-white rounded-lg shadow p-6"
+    css.define :title, "text-3xl font-bold text-gray-800"
+    css.define :meta, "text-gray-400 text-sm mt-2 mb-6"
+    css.define :body, "text-gray-800 leading-relaxed whitespace-pre-line"
+    css.define :comments_section, "mt-10"
+    css.define :comments_title, "text-xl font-semibold text-gray-800 mb-4"
+    css.define :comments_list, "space-y-3"
+    css.define :comment, "bg-white rounded-lg shadow-sm p-4"
+    css.define :comment_meta, "text-gray-400 text-xs mb-1"
+    css.define :comment_body, "text-gray-700 text-sm"
+    css.define :no_comments, "text-gray-500 text-sm"
+    css.define :form_box, "mt-6 bg-white rounded-lg shadow p-4"
+    css.define :form_title, "text-sm font-semibold text-gray-700 mb-2"
+    css.define :textarea, "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    css.define :submit, "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700"
+    css.define :submit_disabled, "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold opacity-50 cursor-not-allowed"
+    css.define :login_prompt, "mt-6 text-sm text-gray-600"
+    css.define :login_link, "text-blue-600 hover:underline"
+    css.define :missing, "text-gray-500"
   end
 
   def initialize(params = {})
@@ -40,7 +40,7 @@ class BlogPostComponent < Funicular::Component
 
     # When the server injected the post (SSR + hydration) we trust its state,
     # including who the viewer is. Only fetch on pure client-side navigation.
-    return unless state.post.nil?
+    return unless state[:post].nil?
 
     Post.find(@post_id) do |post, error|
       patch(post: post_to_h(post), comments: post.comments || []) unless error
@@ -54,12 +54,12 @@ class BlogPostComponent < Funicular::Component
     event.preventDefault
 
     textarea = @refs[:comment_body]
-    body = textarea ? textarea[:value].to_s.strip : state.comment[:body].to_s.strip
+    body = textarea ? textarea[:value].to_s.strip : state[:comment][:body].to_s.strip
     return if body.empty?
 
     patch(submitting: true, errors: {})
 
-    Comment.create({ post_id: state.post["id"], body: body }) do |comment, error|
+    Comment.create({ post_id: state[:post]["id"], body: body }) do |comment, error|
       if error
         patch(errors: { body: error }, submitting: false)
       else
@@ -73,7 +73,7 @@ class BlogPostComponent < Funicular::Component
   end
 
   def reload_post_comments
-    Post.find(state.post["id"]) do |post, error|
+    Post.find(state[:post]["id"]) do |post, error|
       if error
         patch(errors: { body: error }, submitting: false)
       else
@@ -88,81 +88,81 @@ class BlogPostComponent < Funicular::Component
     end
   end
 
-  def render
-    div(class: s.container) do
-      div(class: s.inner) do
-        div(class: s.back) do
-          link_to "/blog", navigate: true, class: s.back_link do
-            span { "All posts" }
+  def render(h)
+    h.div(class: h.styles[:container]) do
+      h.div(class: h.styles[:inner]) do
+        h.div(class: h.styles[:back]) do
+          h.link_to "/blog", navigate: true, class: h.styles[:back_link] do
+            h.span { "All posts" }
           end
-          link_to "/chat", navigate: true, class: s.back_link do
-            span { "Back to chat" }
+          h.link_to "/chat", navigate: true, class: h.styles[:back_link] do
+            h.span { "Back to chat" }
           end
         end
 
-        if state.post.nil?
-          p(class: s.missing) { "Loading post..." }
+        if state[:post].nil?
+          h.p(class: h.styles[:missing]) { "Loading post..." }
         else
-          article(class: s.article_box) do
-            h1(class: s.title) { state.post["title"] }
-            div(class: s.meta) { "#{state.post["author_name"]} - #{format_date(state.post["published_at"])}" }
-            div(class: s.body) { state.post["body"] }
+          h.article(class: h.styles[:article_box]) do
+            h.h1(class: h.styles[:title]) { state[:post]["title"] }
+            h.div(class: h.styles[:meta]) { "#{state[:post]["author_name"]} - #{format_date(state[:post]["published_at"])}" }
+            h.div(class: h.styles[:body]) { state[:post]["body"] }
           end
 
-          section(class: s.comments_section) do
-            h2(class: s.comments_title) { "Comments (#{state.comments.size})" }
+          h.section(class: h.styles[:comments_section]) do
+            h.h2(class: h.styles[:comments_title]) { "Comments (#{state[:comments].size})" }
 
-            if state.comments.empty?
-              p(class: s.no_comments) { "No comments yet." }
+            if state[:comments].empty?
+              h.p(class: h.styles[:no_comments]) { "No comments yet." }
             else
-              div(class: s.comments_list) do
-                state.comments.each do |comment|
-                  div(class: s.comment, key: comment["id"]) do
-                    div(class: s.comment_meta) { "#{comment["author_name"]} - #{format_date(comment["created_at"])}" }
-                    div(class: s.comment_body) { comment["body"] }
+              h.div(class: h.styles[:comments_list]) do
+                state[:comments].each do |comment|
+                  h.div(class: h.styles[:comment], key: comment["id"]) do
+                    h.div(class: h.styles[:comment_meta]) { "#{comment["author_name"]} - #{format_date(comment["created_at"])}" }
+                    h.div(class: h.styles[:comment_body]) { comment["body"] }
                   end
                 end
               end
             end
 
-            if state.current_user
-              div(class: s.form_box) do
-                div(class: s.form_title) { "Comment as #{state.current_user["display_name"]}" }
-                if state.interactive
-                  form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
-                    textarea(
+            if state[:current_user]
+              h.div(class: h.styles[:form_box]) do
+                h.div(class: h.styles[:form_title]) { "Comment as #{state[:current_user]["display_name"]}" }
+                if state[:interactive]
+                  h.form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
+                    h.textarea(
                       ref: :comment_body,
-                      class: s.textarea,
+                      class: h.styles[:textarea],
                       rows: 3,
                       placeholder: "Share your thoughts...",
-                      disabled: state.submitting
+                      disabled: state[:submitting]
                     )
-                    button(
+                    h.button(
                       type: "submit",
-                      class: state.submitting ? s.submit_disabled : s.submit,
-                      disabled: state.submitting
+                      class: state[:submitting] ? h.styles[:submit_disabled] : h.styles[:submit],
+                      disabled: state[:submitting]
                     ) do
-                      span { state.submitting ? "Posting..." : "Post comment" }
+                      h.span { state[:submitting] ? "Posting..." : "Post comment" }
                     end
                   end
                 else
-                  div(key: :comment_form_pending) do
-                    textarea(
-                      class: s.textarea,
+                  h.div(key: :comment_form_pending) do
+                    h.textarea(
+                      class: h.styles[:textarea],
                       rows: 3,
                       placeholder: "Share your thoughts...",
                       disabled: true
                     )
-                    button(type: "button", class: s.submit_disabled, disabled: true) do
-                      span { "Post comment" }
+                    h.button(type: "button", class: h.styles[:submit_disabled], disabled: true) do
+                      h.span { "Post comment" }
                     end
                   end
                 end
               end
             else
-              p(class: s.login_prompt) do
-                link_to "/login", navigate: true, class: s.login_link do
-                  span { "Log in to comment" }
+              h.p(class: h.styles[:login_prompt]) do
+                h.link_to "/login", navigate: true, class: h.styles[:login_link] do
+                  h.span { "Log in to comment" }
                 end
               end
             end

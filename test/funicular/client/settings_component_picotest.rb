@@ -28,8 +28,7 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
     drain 650
 
     assert_equal true, Session.__test_current_user_called
-    states = @component.instance_variable_get("@suspense_states")
-    assert_equal :resolved, states[:current_user]
+    assert_equal "alice", @component.state[:user][:username]
     assert_text "Birthday"
     assert_text "Image changes are saved immediately."
     assert_selector "form"
@@ -51,7 +50,7 @@ class SettingsComponentTest < Funicular::Testing::DOMTest
     component = mount SettingsComponent
     drain 650
 
-    component.patch(user: component.state.user.merge(birthday: "1990-04-12"))
+    component.patch(user: component.state[:user].merge(birthday: "1990-04-12"))
     drain
     component.handle_save(display_name: "Alice")
     drain

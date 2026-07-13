@@ -1,7 +1,7 @@
 class ChatComponent < Funicular::Component
-  styles do
-    layout "flex h-screen bg-gray-100"
-    main_content "flex-1 flex"
+  styles do |css|
+    css.define :layout, "flex h-screen bg-gray-100"
+    css.define :main_content, "flex-1 flex"
   end
 
   def initialize(params = {})
@@ -47,7 +47,7 @@ class ChatComponent < Funicular::Component
         patch(loading: false)
       else
         patch(channels: channels, loading: false)
-        if channels.size > 0 && !state.current_channel
+        if channels.size > 0 && !state[:current_channel]
           # Select requested channel if specified, otherwise select first channel
           if @requested_channel_id
             selected_channel = channels.find { |ch| ch.id == @requested_channel_id }
@@ -82,7 +82,7 @@ class ChatComponent < Funicular::Component
       when "initial_messages"
         patch(messages: data["messages"], loading: false)
       when "new_message"
-        messages = state.messages + [data["message"]]
+        messages = state[:messages] + [data["message"]]
         patch(messages: messages, skip_scroll: false)
       when "delete_message"
         handle_message_delete(data["message_id"])
@@ -113,35 +113,35 @@ class ChatComponent < Funicular::Component
       "opacity-100 max-h-screen", "opacity-0 max-h-0",
       duration: 500,
     ) do
-      updated_messages = state.messages.reject { |m| m["id"] == message_id }
+      updated_messages = state[:messages].reject { |m| m["id"] == message_id }
       patch(messages: updated_messages, skip_scroll: true)
     end
   end
 
-  def render
-    div(class: s.layout) do
+  def render(h)
+    h.div(class: h.styles[:layout]) do
       # Sidebar - Channel list
-      component(ChannelListComponent, {
+      h.component(ChannelListComponent, {
         preserve: true,
-        channels: state.channels,
-        current_channel: state.current_channel,
-        current_user: state.current_user,
+        channels: state[:channels],
+        current_channel: state[:current_channel],
+        current_user: state[:current_user],
         on_select_channel: ->(channel) { select_channel(channel) },
         on_logout: ->(event) { handle_logout(event) }
       })
 
       # Main content area (chat + stats)
-      div(class: s.main_content) do
+      h.div(class: h.styles[:main_content]) do
         # Chat area
-        component(MessageListComponent, {
+        h.component(MessageListComponent, {
           preserve: true,
-          current_channel: state.current_channel,
-          channel_id: state.current_channel&.id,
-          messages: state.messages,
-          loading: state.loading,
-          current_user: state.current_user,
-          skip_scroll: state.skip_scroll,
-          avatar_cache_buster: state.avatar_cache_buster,
+          current_channel: state[:current_channel],
+          channel_id: state[:current_channel]&.id,
+          messages: state[:messages],
+          loading: state[:loading],
+          current_user: state[:current_user],
+          skip_scroll: state[:skip_scroll],
+          avatar_cache_buster: state[:avatar_cache_buster],
           on_send_message: ->(content) { handle_send_message(content) },
           on_message_delete: ->(message_id) { handle_message_delete(message_id) }
         })
