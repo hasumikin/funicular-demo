@@ -18,10 +18,10 @@ RUN apt-get update -qq && \
 # Build picorbc compiler
 WORKDIR /tmp/picoruby
 RUN git clone --depth=1 --single-branch --branch master https://github.com/picoruby/picoruby . && \
-    git submodule update --init --recursive mrbgems/mruby-compiler2 && \
-    git submodule update --init mrbgems/mruby-bin-mrbc2 && \
+    git submodule update --init --recursive mrbgems/mruby-compiler && \
+    git submodule update --init mrbgems/mruby-bin-mrbc && \
     MRUBY_CONFIG=picorbc rake && \
-    cp bin/picorbc /usr/local/bin/ && \
+    cp bin/mrbc /usr/local/bin/picorbc && \
     chmod +x /usr/local/bin/picorbc
 
 WORKDIR /rails
