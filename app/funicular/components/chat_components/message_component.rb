@@ -1,16 +1,16 @@
 class MessageComponent < Funicular::Component
-  styles do |css|
-    css.define :message, "flex items-start space-x-3 overflow-hidden transition-[opacity,max-height,transform] duration-500 ease-out max-h-screen"
-    css.define :avatar_img, "flex-shrink-0 w-10 h-10 rounded-full object-cover"
-    css.define :avatar_placeholder, "flex-shrink-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold"
+  styles do
+    message "flex items-start space-x-3 overflow-hidden transition-[opacity,max-height,transform] duration-500 ease-out max-h-screen"
+    avatar_img "flex-shrink-0 w-10 h-10 rounded-full object-cover"
+    avatar_placeholder "flex-shrink-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold"
 
-    css.define :message_content, "flex-1"
-    css.define :message_header, "flex items-baseline space-x-2"
-    css.define :message_author, "font-semibold text-gray-900"
-    css.define :message_time, "text-xs text-gray-500"
-    css.define :message_text, "text-gray-800 mt-1"
+    message_content "flex-1"
+    message_header "flex items-baseline space-x-2"
+    message_author "font-semibold text-gray-900"
+    message_time "text-xs text-gray-500"
+    message_text "text-gray-800 mt-1"
 
-    css.define :delete_button, "ml-2 text-xs text-red-500 hover:text-red-700 cursor-pointer"
+    delete_button "ml-2 text-xs text-red-500 hover:text-red-700 cursor-pointer"
   end
 
   def component_mounted
@@ -22,8 +22,8 @@ class MessageComponent < Funicular::Component
     )
   end
 
-  def render(h)
-    h.div(class: "#{h.styles[:message]} opacity-0 scale-95", id: "message-#{props[:message]['id']}") do
+  def render
+    div(class: "#{styles.message} opacity-0 scale-95", id: "message-#{props[:message]['id']}") do
       # Avatar
       if props[:message]["user"]["has_avatar"]
         # Add cache buster for current user's avatar to show updates immediately
@@ -33,26 +33,26 @@ class MessageComponent < Funicular::Component
         else
           "/users/#{props[:message]['user']['id']}/avatar"
         end
-        h.img(src: avatar_url, class: h.styles[:avatar_img])
+        img(src: avatar_url, class: styles.avatar_img)
       else
-        h.div(class: h.styles[:avatar_placeholder]) do
-          h.span { props[:message]["user"]["display_name"][0].upcase }
+        div(class: styles.avatar_placeholder) do
+          span { props[:message]["user"]["display_name"][0].upcase }
         end
       end
 
-      h.div(class: h.styles[:message_content]) do
-        h.div(class: h.styles[:message_header]) do
-          h.span(class: h.styles[:message_author]) { props[:message]["user"]["display_name"] }
-          h.span(class: h.styles[:message_time]) { props[:message]["created_at"] }
+      div(class: styles.message_content) do
+        div(class: styles.message_header) do
+          span(class: styles.message_author) { props[:message]["user"]["display_name"] }
+          span(class: styles.message_time) { props[:message]["created_at"] }
 
           # Show delete button only for own messages
           if props[:current_user] && props[:current_user].id == props[:message]["user"]["id"]
-            h.link_to h.routes.message_path(props[:message]['id']), method: :delete, class: h.styles[:delete_button] do
-              h.span { "Delete" }
+            link_to routes.message_path(props[:message]['id']), method: :delete, class: styles.delete_button do
+              span { "Delete" }
             end
           end
         end
-        h.div(class: h.styles[:message_text]) { props[:message]["content"] }
+        div(class: styles.message_text) { props[:message]["content"] }
       end
     end
   end

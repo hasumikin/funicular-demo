@@ -1,28 +1,28 @@
 class BlogPostComponent < Funicular::Component
-  styles do |css|
-    css.define :container, "min-h-screen bg-gray-50 py-10"
-    css.define :inner, "max-w-2xl mx-auto px-4"
-    css.define :back, "mb-6 text-sm flex gap-4"
-    css.define :back_link, "text-blue-600 hover:underline"
-    css.define :article_box, "bg-white rounded-lg shadow p-6"
-    css.define :title, "text-3xl font-bold text-gray-800"
-    css.define :meta, "text-gray-400 text-sm mt-2 mb-6"
-    css.define :body, "text-gray-800 leading-relaxed whitespace-pre-line"
-    css.define :comments_section, "mt-10"
-    css.define :comments_title, "text-xl font-semibold text-gray-800 mb-4"
-    css.define :comments_list, "space-y-3"
-    css.define :comment, "bg-white rounded-lg shadow-sm p-4"
-    css.define :comment_meta, "text-gray-400 text-xs mb-1"
-    css.define :comment_body, "text-gray-700 text-sm"
-    css.define :no_comments, "text-gray-500 text-sm"
-    css.define :form_box, "mt-6 bg-white rounded-lg shadow p-4"
-    css.define :form_title, "text-sm font-semibold text-gray-700 mb-2"
-    css.define :textarea, "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    css.define :submit, "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700"
-    css.define :submit_disabled, "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold opacity-50 cursor-not-allowed"
-    css.define :login_prompt, "mt-6 text-sm text-gray-600"
-    css.define :login_link, "text-blue-600 hover:underline"
-    css.define :missing, "text-gray-500"
+  styles do
+    container "min-h-screen bg-gray-50 py-10"
+    inner "max-w-2xl mx-auto px-4"
+    back "mb-6 text-sm flex gap-4"
+    back_link "text-blue-600 hover:underline"
+    article_box "bg-white rounded-lg shadow p-6"
+    title "text-3xl font-bold text-gray-800"
+    meta "text-gray-400 text-sm mt-2 mb-6"
+    body "text-gray-800 leading-relaxed whitespace-pre-line"
+    comments_section "mt-10"
+    comments_title "text-xl font-semibold text-gray-800 mb-4"
+    comments_list "space-y-3"
+    comment "bg-white rounded-lg shadow-sm p-4"
+    comment_meta "text-gray-400 text-xs mb-1"
+    comment_body "text-gray-700 text-sm"
+    no_comments "text-gray-500 text-sm"
+    form_box "mt-6 bg-white rounded-lg shadow p-4"
+    form_title "text-sm font-semibold text-gray-700 mb-2"
+    textarea "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    submit "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700"
+    submit_disabled "mt-2 px-5 py-2 rounded-md bg-blue-600 text-white font-semibold opacity-50 cursor-not-allowed"
+    login_prompt "mt-6 text-sm text-gray-600"
+    login_link "text-blue-600 hover:underline"
+    missing "text-gray-500"
   end
 
   def initialize(params = {})
@@ -88,81 +88,81 @@ class BlogPostComponent < Funicular::Component
     end
   end
 
-  def render(h)
-    h.div(class: h.styles[:container]) do
-      h.div(class: h.styles[:inner]) do
-        h.div(class: h.styles[:back]) do
-          h.link_to "/blog", navigate: true, class: h.styles[:back_link] do
-            h.span { "All posts" }
+  def render
+    div(class: styles.container) do
+      div(class: styles.inner) do
+        div(class: styles.back) do
+          link_to "/blog", navigate: true, class: styles.back_link do
+            span { "All posts" }
           end
-          h.link_to "/chat", navigate: true, class: h.styles[:back_link] do
-            h.span { "Back to chat" }
+          link_to "/chat", navigate: true, class: styles.back_link do
+            span { "Back to chat" }
           end
         end
 
         if state[:post].nil?
-          h.p(class: h.styles[:missing]) { "Loading post..." }
+          p(class: styles.missing) { "Loading post..." }
         else
-          h.article(class: h.styles[:article_box]) do
-            h.h1(class: h.styles[:title]) { state[:post]["title"] }
-            h.div(class: h.styles[:meta]) { "#{state[:post]["author_name"]} - #{format_date(state[:post]["published_at"])}" }
-            h.div(class: h.styles[:body]) { state[:post]["body"] }
+          article(class: styles.article_box) do
+            h1(class: styles.title) { state[:post]["title"] }
+            div(class: styles.meta) { "#{state[:post]["author_name"]} - #{format_date(state[:post]["published_at"])}" }
+            div(class: styles.body) { state[:post]["body"] }
           end
 
-          h.section(class: h.styles[:comments_section]) do
-            h.h2(class: h.styles[:comments_title]) { "Comments (#{state[:comments].size})" }
+          section(class: styles.comments_section) do
+            h2(class: styles.comments_title) { "Comments (#{state[:comments].size})" }
 
             if state[:comments].empty?
-              h.p(class: h.styles[:no_comments]) { "No comments yet." }
+              p(class: styles.no_comments) { "No comments yet." }
             else
-              h.div(class: h.styles[:comments_list]) do
+              div(class: styles.comments_list) do
                 state[:comments].each do |comment|
-                  h.div(class: h.styles[:comment], key: comment["id"]) do
-                    h.div(class: h.styles[:comment_meta]) { "#{comment["author_name"]} - #{format_date(comment["created_at"])}" }
-                    h.div(class: h.styles[:comment_body]) { comment["body"] }
+                  div(class: styles.comment, key: comment["id"]) do
+                    div(class: styles.comment_meta) { "#{comment["author_name"]} - #{format_date(comment["created_at"])}" }
+                    div(class: styles.comment_body) { comment["body"] }
                   end
                 end
               end
             end
 
             if state[:current_user]
-              h.div(class: h.styles[:form_box]) do
-                h.div(class: h.styles[:form_title]) { "Comment as #{state[:current_user]["display_name"]}" }
+              div(class: styles.form_box) do
+                div(class: styles.form_title) { "Comment as #{state[:current_user]["display_name"]}" }
                 if state[:interactive]
-                  h.form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
-                    h.textarea(
+                  form(onsubmit: ->(event) { handle_submit(event) }, key: :comment_form_ready) do
+                    textarea(
                       ref: :comment_body,
-                      class: h.styles[:textarea],
+                      class: styles.textarea,
                       rows: 3,
                       placeholder: "Share your thoughts...",
                       disabled: state[:submitting]
                     )
-                    h.button(
+                    button(
                       type: "submit",
-                      class: state[:submitting] ? h.styles[:submit_disabled] : h.styles[:submit],
+                      class: state[:submitting] ? styles.submit_disabled : styles.submit,
                       disabled: state[:submitting]
                     ) do
-                      h.span { state[:submitting] ? "Posting..." : "Post comment" }
+                      span { state[:submitting] ? "Posting..." : "Post comment" }
                     end
                   end
                 else
-                  h.div(key: :comment_form_pending) do
-                    h.textarea(
-                      class: h.styles[:textarea],
+                  div(key: :comment_form_pending) do
+                    textarea(
+                      class: styles.textarea,
                       rows: 3,
                       placeholder: "Share your thoughts...",
                       disabled: true
                     )
-                    h.button(type: "button", class: h.styles[:submit_disabled], disabled: true) do
-                      h.span { "Post comment" }
+                    button(type: "button", class: styles.submit_disabled, disabled: true) do
+                      span { "Post comment" }
                     end
                   end
                 end
               end
             else
-              h.p(class: h.styles[:login_prompt]) do
-                h.link_to "/login", navigate: true, class: h.styles[:login_link] do
-                  h.span { "Log in to comment" }
+              p(class: styles.login_prompt) do
+                link_to "/login", navigate: true, class: styles.login_link do
+                  span { "Log in to comment" }
                 end
               end
             end

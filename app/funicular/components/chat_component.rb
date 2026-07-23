@@ -1,7 +1,7 @@
 class ChatComponent < Funicular::Component
-  styles do |css|
-    css.define :layout, "flex h-screen bg-gray-100"
-    css.define :main_content, "flex-1 flex"
+  styles do
+    layout "flex h-screen bg-gray-100"
+    main_content "flex-1 flex"
   end
 
   def initialize(params = {})
@@ -118,10 +118,10 @@ class ChatComponent < Funicular::Component
     end
   end
 
-  def render(h)
-    h.div(class: h.styles[:layout]) do
+  def render
+    div(class: styles.layout) do
       # Sidebar - Channel list
-      h.component(ChannelListComponent, {
+      component(ChannelListComponent, {
         preserve: true,
         channels: state[:channels],
         current_channel: state[:current_channel],
@@ -131,9 +131,9 @@ class ChatComponent < Funicular::Component
       })
 
       # Main content area (chat + stats)
-      h.div(class: h.styles[:main_content]) do
+      div(class: styles.main_content) do
         # Chat area
-        h.component(MessageListComponent, {
+        component(MessageListComponent, {
           preserve: true,
           current_channel: state[:current_channel],
           channel_id: state[:current_channel]&.id,
