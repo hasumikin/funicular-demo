@@ -26,6 +26,15 @@ class LoginComponent < Funicular::Component
     }
   end
 
+  def component_mounted
+    # A successful login rotates the session epoch, so the framework
+    # reloads this page into the new user's namespace -- landing here
+    # again. Forward signed-in visitors to the chat.
+    Session.current_user do |user, error|
+      Funicular.router.navigate("/chat") if user
+    end
+  end
+
   def handle_submit(data)
     if data[:username].to_s.empty? || data[:password].to_s.empty?
       patch(errors: { username: "Please enter username and password" })
@@ -36,11 +45,15 @@ class LoginComponent < Funicular::Component
 
     # Login using Session model
     Session.login(data[:username], data[:password]) do |user, error|
-      if error
-        patch(loading: false, errors: { username: error })
-      else
+      if user
         puts "Login successful: #{user.username}"
         Funicular.router.navigate("/chat")
+      elsif Funicular::DB.session_terminated?
+        # The login succeeded and rotated the session epoch: the
+        # response was discarded and the framework is reloading the
+        # page. Keep the loading state instead of flashing an error.
+      else
+        patch(loading: false, errors: { username: error })
       end
     end
   end

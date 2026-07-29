@@ -14,12 +14,12 @@ gem "bootsnap", require: false
 # Tailwind CSS
 gem "tailwindcss-rails"
 
-# Funicular
-gem "funicular"
+# Funicular (local checkouts while 0.5.0 is unreleased)
+gem "funicular", path: "../funicular"
 
 group :funicular do
-  gem "funicular-datepicker"
-  gem "funicular-image-uploader"
+  gem "funicular-datepicker", path: "../funicular-datepicker"
+  gem "funicular-image-uploader", path: "../funicular-image-uploader"
 end
 
 group :development do

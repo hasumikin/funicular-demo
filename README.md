@@ -70,10 +70,11 @@ Client-side component tests live under `test/funicular/client/**/*_picotest.rb`.
 
 ## Key Files
 
-- `app/funicular/initializer.rb`: Funicular startup, schema loading, routes, store setup.
+- `app/funicular/initializer.rb`: Funicular startup, schema loading, routes.
 - `app/funicular/components/chat_component.rb`: top-level chat screen.
 - `app/funicular/components/settings_component.rb`: plugin-backed settings screen.
-- `app/funicular/stores/draft_store.rb`: IndexedDB-backed draft messages.
+- `app/funicular/models/draft.rb`: local-database (`storage :local`) draft messages.
+- `config/initializers/funicular.rb`: local-database opt-in (`config.local_database`, `config.user_key`).
 - `app/channels/chat_channel.rb`: ActionCable integration.
 - `app/controllers/home_controller.rb`: SSR entry point for the blog.
 - `test/funicular/application_test.rb`: Rails wrapper for Funicular client tests.

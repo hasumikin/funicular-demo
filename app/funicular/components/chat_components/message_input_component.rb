@@ -24,19 +24,19 @@ class MessageInputComponent < Funicular::Component
     old_channel_id = state[:current_channel_id]
     return if new_channel_id == old_channel_id
 
-    # Channel changed: save old draft, load new one
-    Funicular::DraftStore.set(old_channel_id, state[:message_input])
+    # Channel changed: save the old channel's draft, load the new one.
+    save_draft(old_channel_id, state[:message_input])
     patch(current_channel_id: new_channel_id, message_input: "")
     restore_draft
   end
 
-  def component_will_unmount
-    save_draft_now unless Funicular::DraftStore.disabled?
-  end
-
   def handle_input(event)
-    patch(message_input: event.target[:value])
-    schedule_save_draft
+    text = event.target[:value]
+    patch(message_input: text)
+    # Synchronous local-database write per keystroke; the framework
+    # debounces the IndexedDB snapshot on its own, so no hand-rolled
+    # save timer is needed anymore.
+    save_draft(props[:channel_id], text)
   end
 
   def handle_submit(event)
@@ -49,8 +49,7 @@ class MessageInputComponent < Funicular::Component
     form.reset if form
 
     patch(message_input: "")
-    Funicular::DraftStore.delete(props[:channel_id])
-    cancel_save_timer
+    discard_draft(props[:channel_id])
 
     props[:on_send_message].call(content)
   end
@@ -81,22 +80,21 @@ class MessageInputComponent < Funicular::Component
   private
 
   def restore_draft
-    saved = Funicular::DraftStore.get(props[:channel_id])
-    patch(message_input: saved.to_s) if saved && !saved.to_s.empty?
+    draft = Draft.for_channel(props[:channel_id])
+    patch(message_input: draft.body) if draft && !draft.body.to_s.empty?
   end
 
-  def save_draft_now
-    Funicular::DraftStore.set(props[:channel_id], state[:message_input])
+  # A reader tab (another tab holds the writer lock) cannot write to
+  # the local database: drafts simply do not save there.
+  def save_draft(channel_id, text)
+    Draft.store(channel_id, text)
+  rescue Funicular::DB::ReadOnlyTabError
+    nil
   end
 
-  def schedule_save_draft
-    cancel_save_timer
-    @save_timer = JS.global.setTimeout(300) { save_draft_now }
-  end
-
-  def cancel_save_timer
-    return unless @save_timer
-    JS.global.clearTimeout(@save_timer)
-    @save_timer = nil
+  def discard_draft(channel_id)
+    Draft.discard(channel_id)
+  rescue Funicular::DB::ReadOnlyTabError
+    nil
   end
 end

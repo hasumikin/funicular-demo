@@ -1,4 +1,10 @@
 class Session < Funicular::Model
+  # Ephemeral: the session schema has no id attribute, so its rows
+  # cannot be mirrored into a replica table. Login/logout responses
+  # rotate the session epoch server-side; the page reloads into the
+  # new namespace automatically.
+  storage :ephemeral
+
   def self.login(username, password, &block)
     create({ username: username, password: password }, model_class: User, &block)
   end

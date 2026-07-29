@@ -66,38 +66,34 @@ class SettingsComponent < Funicular::Component
   end
 
   def save_with_model(display_name, birthday)
-    # Preserve has_avatar state
     current_user = state[:current_user]
-    had_avatar = current_user.has_avatar
 
     current_user.display_name = display_name
     current_user.birthday = birthday
-    current_user.update do |success, result|
-      if success
-        current_user.instance_variable_set("@display_name", result["display_name"])
-        current_user.instance_variable_set("@birthday", result["birthday"])
-        # Preserve has_avatar if not included in response
-        if result["has_avatar"].nil? && had_avatar
-          current_user.instance_variable_set("@has_avatar", true)
-        end
-
+    # Funicular 0.5 REST callbacks are uniformly (result, error). On
+    # success the server's row is already applied to the instance (and
+    # the replica) before the callback runs -- no manual attribute
+    # copying; keys absent from the response (has_avatar) are left
+    # untouched.
+    current_user.update do |updated, error|
+      if updated
         patch(
-          current_user: current_user,
+          current_user: updated,
           saving: false,
           message: "Settings saved successfully!",
           is_error: false,
           user: {
-            username: current_user.username,
-            display_name: current_user.display_name,
-            birthday: current_user.birthday
+            username: updated.username,
+            display_name: updated.display_name,
+            birthday: updated.birthday
           }
         )
-      elsif result.respond_to?(:messages)
+      elsif error.respond_to?(:messages)
         # Client-side validation failed before any request: show inline,
         # per-field errors (rendered by form_for beside each field).
-        patch(saving: false, errors: result.messages)
+        patch(saving: false, errors: error.messages)
       else
-        patch(saving: false, message: "Error: #{result}", is_error: true)
+        patch(saving: false, message: "Error: #{error}", is_error: true)
       end
     end
   end

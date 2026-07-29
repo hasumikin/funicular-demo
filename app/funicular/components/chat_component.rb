@@ -22,8 +22,11 @@ class ChatComponent < Funicular::Component
   end
 
   def component_mounted
-    # Re-enable drafts (may have been disabled on logout)
-    Funicular::DraftStore.enable!
+    # Local-database reactivity: the channel list renders from the
+    # replica table. A previous visit's snapshot paints it instantly on
+    # reload; Channel.all below revalidates through fetch-through and
+    # the watcher re-renders on the change event.
+    watch(:channels) { Channel.local.order(:name) }
 
     # Check if logged in using Session model
     Session.current_user do |user, error|
@@ -41,12 +44,17 @@ class ChatComponent < Funicular::Component
   end
 
   def load_channels
-    # Load channels using Channel model
+    # Explicit fetch (the framework never fetches implicitly): the
+    # response upserts the replica table, and the watch above updates
+    # state[:channels] -- no manual patch of the list here.
     Channel.all do |channels, error|
       if error
+        # Silent-empty sidebars are undebuggable: say why the fetch
+        # failed. The watch keeps rendering whatever the replica holds.
+        puts "[demo] Channel.all failed: #{error}"
         patch(loading: false)
       else
-        patch(channels: channels, loading: false)
+        patch(loading: false)
         if channels.size > 0 && !state[:current_channel]
           # Select requested channel if specified, otherwise select first channel
           if @requested_channel_id
@@ -98,10 +106,10 @@ class ChatComponent < Funicular::Component
   end
 
   def handle_logout(event)
-    # Clear all drafts on logout (privacy: don't leak to next user)
-    Funicular::DraftStore.clear_all!
-
-    # Logout using Session model
+    # No draft cleanup needed: drafts live in the local database under
+    # this user's namespace, invisible to the next account. The logout
+    # response rotates the session epoch, so the framework reloads the
+    # page into the anonymous namespace on its own.
     Session.logout do |success, error|
       Funicular.router.navigate("/login")
     end

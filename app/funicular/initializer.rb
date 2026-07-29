@@ -6,9 +6,10 @@ Funicular.debug_color = "pink"  # Options: "green", "yellow", "pink", "cyan", or
 # Mount JavaScript helpers
 Funicular::FileUpload.mount
 
-# Initialize draft store (defined in stores/draft_store.rb).
-# Skipped on the server (SSR): IndexedDB is a browser-only API.
-Funicular::DraftStore.init! unless Funicular.server?
+# Message drafts live in the local database now (models/draft.rb,
+# storage :local): no store to initialize -- Funicular.start boots the
+# database (migrations, snapshot restore, writer election) before
+# anything mounts.
 
 # Load all model schemas before starting the app
 Funicular.load_schemas({ User => "user", Session => "session", Channel => "channel", Post => "post", Comment => "comment" }) do

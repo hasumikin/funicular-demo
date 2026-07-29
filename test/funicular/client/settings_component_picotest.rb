@@ -76,15 +76,11 @@ class User
     attr_accessor :__test_last_birthday
   end
 
+  # Mirrors the funicular 0.5 REST callback convention: on success the
+  # server row is already applied to the instance, and the callback
+  # receives (result, error) -- the instance and nil.
   def update(&block)
     self.class.__test_last_birthday = birthday
-    block.call(
-      true,
-      {
-        "display_name" => display_name,
-        "birthday" => birthday,
-        "has_avatar" => has_avatar
-      }
-    )
+    block.call(self, nil)
   end
 end

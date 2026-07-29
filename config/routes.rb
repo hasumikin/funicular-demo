@@ -18,7 +18,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     get "schema/user", to: "schema#user"
-    get "schema/session", to: "schema#session"
+    get "schema/session", to: "schema#session_schema"
     get "schema/channel", to: "schema#channel"
     get "schema/post", to: "schema#post"
     get "schema/comment", to: "schema#comment"

@@ -21,7 +21,12 @@ class Api::SchemaController < ApplicationController
     )
   end
 
-  def session
+  # Not named "session": an action called session would shadow
+  # ActionController#session, and any code reading the Rails session
+  # through the accessor would invoke the action instead. (Funicular
+  # itself reads request.session and survives the shadowing, but the
+  # accessor is a Rails-wide surface -- do not sit an action on it.)
+  def session_schema
     render json: {
       attributes: {
         "username" => { type: "string", readonly: false },

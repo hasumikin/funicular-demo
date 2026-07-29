@@ -19,3 +19,16 @@ Rails.autoloaders.main.ignore(Rails.root.join("app/funicular"))
 #   config.production_source = :cdn
 #   # config.cdn_version = "4.0.0"  # defaults to the version vendored in the gem
 # end
+
+# Local database (SQLite in the browser): explicit global opt-in.
+# user_key isolates each user's IndexedDB snapshots, Web Lock, and
+# session epoch; it resolves nil while signed out (anonymous namespace).
+Funicular.configure do |config|
+  config.local_database = true
+  # The signed-in user id straight from the session: the same source
+  # current_user reads, without a per-request DB query (the resolver
+  # runs on every action for epoch stamping). request.session rather
+  # than the controller's session accessor, which an action named
+  # "session" would shadow.
+  config.user_key = ->(controller) { controller.request.session[:user_id]&.to_s }
+end
