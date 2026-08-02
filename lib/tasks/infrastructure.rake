@@ -172,30 +172,34 @@ namespace :infra do
     puts "Starting ECR cleanup..."
     ecr_repo = "rails-chat"
 
-    # Get image IDs and delete them
-    images_json = `aws ecr describe-images \
-      --repository-name #{ecr_repo} \
-      --region #{region} \
-      --query 'imageDetails[*].imageId' \
-      --output json 2>/dev/null`.strip
+    # Delete all images. Loop because untagged images referenced by a
+    # multi-arch manifest list only become deletable after the parent
+    # manifest is deleted.
+    3.times do
+      images_json = `aws ecr list-images \
+        --repository-name #{ecr_repo} \
+        --region #{region} \
+        --query 'imageIds' \
+        --output json 2>/dev/null`.strip
 
-    unless images_json.empty? || images_json == "[]"
+      break if images_json.empty? || images_json == "[]"
+
       images = JSON.parse(images_json)
-      if images.any?
-        puts "Found #{images.length} image(s) in ECR. Deleting..."
-        images.each do |image_id|
-          system(
-            "aws", "ecr", "batch-delete-image",
-            "--repository-name", ecr_repo,
-            "--image-ids", image_id.to_json,
-            "--region", region,
-            out: File::NULL,
-            err: File::NULL
-          )
-        end
-        puts "ECR images deleted."
+      break if images.empty?
+
+      puts "Found #{images.length} image(s) in ECR. Deleting..."
+      images.each_slice(100) do |batch|
+        system(
+          "aws", "ecr", "batch-delete-image",
+          "--repository-name", ecr_repo,
+          "--image-ids", batch.to_json,
+          "--region", region,
+          out: File::NULL,
+          err: File::NULL
+        )
       end
     end
+    puts "ECR cleanup done."
 
     puts "Deleting CloudFormation stack..."
     success = system(
