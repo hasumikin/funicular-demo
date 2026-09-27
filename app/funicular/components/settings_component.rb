@@ -1,10 +1,10 @@
 class SettingsComponent < Funicular::Component
   styles do
-    container "min-h-screen bg-gray-100 py-8"
+    # Fills the outlet of AppLayoutComponent, which owns the viewport height.
+    container "min-h-full bg-gray-100 py-8"
     card "max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8"
     header "flex items-center justify-between mb-6"
     title "text-2xl font-bold text-gray-800"
-    back_button "text-blue-600 hover:text-blue-800"
     message base: "mb-4 p-4 border rounded",
             variants: {
               success: "bg-green-100 border-green-400 text-green-700",
@@ -101,14 +101,9 @@ class SettingsComponent < Funicular::Component
   def render
     div(class: styles.container) do
       div(class: styles.card) do
+        # Navigation back to the chat is in AppLayoutComponent's top bar.
         div(class: styles.header) do
           h1(class: styles.title) { "Settings" }
-          button(
-            onclick: -> { Funicular.router.navigate("/chat") },
-            class: styles.back_button
-          ) do
-            span { "<- Back to Chat" }
-          end
         end
 
         if state[:message]

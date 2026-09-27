@@ -19,9 +19,13 @@ Funicular.load_schemas({ User => "user", Session => "session", Channel => "chann
     router.get('/blog', to: BlogIndexComponent, as: 'blog')
     router.get('/blog/:id', to: BlogPostComponent, as: 'blog_post', constraints: { id: /\d+/ })
     router.get('/login', to: LoginComponent, as: 'login')
-    router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel', constraints: { channel_id: /\d+/ })
-    router.get('/chat', to: ChatComponent, as: 'chat')
-    router.get('/settings', to: SettingsComponent, as: 'settings')
+    # Signed-in screens share AppLayoutComponent (top bar + outlet). The
+    # layout stays mounted while navigating between these routes.
+    router.layout(AppLayoutComponent) do
+      router.get('/chat/:channel_id', to: ChatComponent, as: 'chat_channel', constraints: { channel_id: /\d+/ })
+      router.get('/chat', to: ChatComponent, as: 'chat')
+      router.get('/settings', to: SettingsComponent, as: 'settings')
+    end
     router.delete('/messages/:id', to: MessageComponent, as: 'message', constraints: { id: /\d+/ })
     router.set_default('/login')
   end

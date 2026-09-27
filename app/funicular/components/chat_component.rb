@@ -1,6 +1,7 @@
 class ChatComponent < Funicular::Component
   styles do
-    layout "flex h-screen bg-gray-100"
+    # Fills the outlet of AppLayoutComponent, which owns the viewport height.
+    layout "flex h-full bg-gray-100"
     main_content "flex-1 flex"
   end
 
@@ -105,16 +106,6 @@ class ChatComponent < Funicular::Component
     @subscription.perform("send_message", { content: content })
   end
 
-  def handle_logout(event)
-    # No draft cleanup needed: drafts live in the local database under
-    # this user's namespace, invisible to the next account. The logout
-    # response rotates the session epoch, so the framework reloads the
-    # page into the anonymous namespace on its own.
-    Session.logout do |success, error|
-      Funicular.router.navigate("/login")
-    end
-  end
-
   def handle_message_delete(message_id)
     remove_via(
       "message-#{message_id}",
@@ -134,8 +125,7 @@ class ChatComponent < Funicular::Component
         channels: state[:channels],
         current_channel: state[:current_channel],
         current_user: state[:current_user],
-        on_select_channel: ->(channel) { select_channel(channel) },
-        on_logout: ->(event) { handle_logout(event) }
+        on_select_channel: ->(channel) { select_channel(channel) }
       })
 
       # Main content area (chat + stats)

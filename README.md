@@ -22,6 +22,7 @@ The point is not to replace Hotwire across a whole application. The point is to 
 ## What The Demo Shows
 
 - **Chat UI**: channel list, message list, message input, settings navigation, and client-side routing under `app/funicular/components/`.
+- **Router layouts**: the chat and settings screens share `AppLayoutComponent` (top bar + `outlet`) through `router.layout`; the blog and login pages render without it.
 - **Realtime updates**: ActionCable broadcasts from Rails controllers/channels into Funicular components.
 - **Local drafts**: unsent messages are stored with the Funicular IndexedDB-backed store.
 - **Rails model integration**: Funicular models load schemas from Rails and use Rails-style endpoints.
@@ -71,6 +72,7 @@ Client-side component tests live under `test/funicular/client/**/*_picotest.rb`.
 ## Key Files
 
 - `app/funicular/initializer.rb`: Funicular startup, schema loading, routes.
+- `app/funicular/components/app_layout_component.rb`: layout shared by the signed-in screens, rendered through `router.layout` and `outlet`.
 - `app/funicular/components/chat_component.rb`: top-level chat screen.
 - `app/funicular/components/settings_component.rb`: plugin-backed settings screen.
 - `app/funicular/models/draft.rb`: local-database (`storage :local`) draft messages.
