@@ -1,3 +1,11 @@
+GIT
+  remote: https://github.com/picoruby/funicular.git
+  revision: fcc0030b6222528ef4ca39d4c74c772666723ac5
+  ref: fcc0030b6222528ef4ca39d4c74c772666723ac5
+  specs:
+    funicular (0.5.2)
+      rails (~> 8.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -92,8 +100,6 @@ GEM
     drb (2.2.3)
     erb (6.0.7)
     erubi (1.13.1)
-    funicular (0.5.0)
-      rails (~> 8.0)
     funicular-datepicker (0.3.1)
       funicular (>= 0.4.0)
     funicular-image-uploader (0.3.2)
@@ -249,7 +255,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap
   debug
-  funicular
+  funicular!
   funicular-datepicker
   funicular-image-uploader
   katakata_irb
@@ -262,4 +268,4 @@ DEPENDENCIES
   web-console
 
 BUNDLED WITH
-   2.6.7
+  4.0.20
