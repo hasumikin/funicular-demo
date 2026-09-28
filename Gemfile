@@ -14,9 +14,7 @@ gem "bootsnap", require: false
 # Tailwind CSS
 gem "tailwindcss-rails"
 
-# Router layouts need funicular 0.5.2, which is not on RubyGems yet.
-# Switch back to `gem "funicular"` once 0.5.2 ships.
-gem "funicular", github: "picoruby/funicular", ref: "fcc0030b6222528ef4ca39d4c74c772666723ac5"
+gem "funicular", github: "picoruby/funicular", branch: "master"
 
 group :funicular do
   gem "funicular-datepicker"
